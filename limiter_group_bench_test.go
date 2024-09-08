@@ -5,8 +5,10 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+
 	"testing"
-	"yesyoukenspace/ratelimit"
+
+	"github.com/yesyoukenspace/ratelimit"
 )
 
 func BenchmarkLiGr(b *testing.B) {
@@ -20,7 +22,7 @@ func BenchmarkLiGr(b *testing.B) {
 		"Map + RWMutex":                ratelimit.NewLiGrRWMutex(rate, burst),
 	}
 
-	for _, concurrentUsers := range []int{8192, 16384, 32768} {
+	for _, concurrentUsers := range []int{1028, 2046, 8192, 16384} {
 		runtime.GOMAXPROCS(16)
 		for name, limiter := range limiterGroups {
 			runner(b, name, concurrentUsers, limiter)
@@ -41,6 +43,9 @@ func runner(b *testing.B, name string, numberOfKeys int, limiter ratelimit.Limit
 		key := 0
 		mu := sync.RWMutex{}
 		mu.Lock()
+		allowed := 0
+		disallowed := 0
+
 		for n > 0 {
 			wgg.Add(1)
 
@@ -53,7 +58,11 @@ func runner(b *testing.B, name string, numberOfKeys int, limiter ratelimit.Limit
 				defer mu.RUnlock()
 				for i := 0; i < quota; i++ {
 					go func() {
-						limiter.Allow(k)
+						if limiter.Allow(k) {
+							allowed++
+						} else {
+							disallowed++
+						}
 						wg.Done()
 					}()
 				}
@@ -66,6 +75,8 @@ func runner(b *testing.B, name string, numberOfKeys int, limiter ratelimit.Limit
 		mu.Unlock()
 		wgg.Wait()
 		b.StopTimer()
+		runtime.KeepAlive(allowed)
+		runtime.KeepAlive(disallowed)
 	})
 }
 

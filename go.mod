@@ -1,4 +1,4 @@
-module yesyoukenspace/ratelimit
+module github.com/yesyoukenspace/ratelimit
 
 go 1.22.4
 

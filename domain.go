@@ -14,10 +14,10 @@ type LimiterGroup interface {
 	Allow(string) bool
 }
 
-type DefaultLimiterGroup = LiGrSyncMapLoadThenLoadOrStore
+type DefaultLiGr = LiGrSyncMapLoadThenLoadOrStore
 
-func NewDefaultLimiterGroup(reqPerSec Limit, burst int) *DefaultLimiterGroup {
-	return &DefaultLimiterGroup{R: reqPerSec, B: burst}
+func NewDefaultLiGr(reqPerSec Limit, burst int) *DefaultLiGr {
+	return &DefaultLiGr{R: reqPerSec, B: burst}
 }
 
 type DefaultLimiter = rate.Limiter

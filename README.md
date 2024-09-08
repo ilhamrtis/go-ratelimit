@@ -1,8 +1,65 @@
 # go-ratelimit
 
-## Benchmarking
-CPU Info
+`go-ratelimit` is a Go library for rate limiting using various synchronization mechanisms. It provides different implementations of rate limiters using `sync.Mutex`, `sync.RWMutex`, and `sync.Map`.
 
+## Project Status
+
+This project is in BETA. Contributions and suggestions are welcome.
+
+## Installation
+
+To install the library, use `go get`:
+
+```bash
+go get -u github.com/yesyoukenspace/ratelimit
+```
+
+## Usage
+
+All implementations follow the same interface as `golang.org/x/time/rate`. 
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/yesyoukenspace/ratelimit"
+)
+
+func main() {
+	limiterGroup := ratelimit.NewDefaultLiGr(10, 5)
+	key := "user123"
+	if limiterGroup.Allow(key) {
+		fmt.Println("Request allowed")
+	} else {
+		fmt.Println("Request denied")
+	}
+}
+```
+
+### Available Implementations
+Here are the available implementations:
+
+- **LiGrMutex**: Uses `sync.Mutex`.
+- **LiGrRWMutex**: Uses `sync.RWMutex`.
+- **LiGrSyncMapLoadThenLoadOrStore**: Uses `sync.Map` with `Load` then `LoadOrStore`.
+- **LiGrSyncMapLoadOrStore**: Uses `sync.Map` with `LoadOrStore`.
+- **LiGrSyncMapLoadThenStore**: Uses `sync.Map` with `Load` then `Store`.
+
+Refer to the respective files for implementation details:
+- [mutex.go](mutex.go)
+- [sync_map.go](sync_map.go)
+
+## Benchmarking
+
+To benchmark the different implementations, use the following command:
+
+```bash
+go test -bench ./... -test.count=3 -test.benchtime=1s
+```
+
+### Benchmarking results
+CPU Info
 ```bash
 > sysctl -a machdep.cpu
 machdep.cpu.cores_per_package: 10
@@ -12,21 +69,19 @@ machdep.cpu.thread_count: 10
 machdep.cpu.brand_string: Apple M1 Pro
 ```
 
-Results
-| Benchmark                                                               | Iterations | Time per Operation (ns/op) | Memory per Operation (B/op) | Allocations per Operation (allocs/op) |
-| ----------------------------------------------------------------------- | ---------- | -------------------------- | --------------------------- | ------------------------------------- |
-| BenchmarkLiGr/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:8192-10  | 5273980    | 329.5 ns/op                | 89 B/op                     | 1 allocs/op                           |
-| BenchmarkLiGr/name:SyncMap_+_Load_>_Store;number_of_keys:8192-10        | 6777685    | 413.4 ns/op                | 111 B/op                    | 1 allocs/op                           |
-| BenchmarkLiGr/name:Map_+_Mutex;number_of_keys:8192-10                   | 1843262    | 704.6 ns/op                | 48 B/op                     | 1 allocs/op                           |
-| BenchmarkLiGr/name:Map_+_RWMutex;number_of_keys:8192-10                 | 5528402    | 628.6 ns/op                | 148 B/op                    | 1 allocs/op                           |
-| BenchmarkLiGr/name:SyncMap_+_LoadOrStore;number_of_keys:8192-10         | 5929664    | 2905 ns/op                 | 346 B/op                    | 3 allocs/op                           |
-| BenchmarkLiGr/name:Map_+_Mutex;number_of_keys:16384-10                  | 1808432    | 660.3 ns/op                | 49 B/op                     | 1 allocs/op                           |
-| BenchmarkLiGr/name:Map_+_RWMutex;number_of_keys:16384-10                | 3640098    | 449.9 ns/op                | 48 B/op                     | 1 allocs/op                           |
-| BenchmarkLiGr/name:SyncMap_+_LoadOrStore;number_of_keys:16384-10        | 3183156    | 377.0 ns/op                | 145 B/op                    | 3 allocs/op                           |
-| BenchmarkLiGr/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384-10 | 4056458    | 747.7 ns/op                | 48 B/op                     | 1 allocs/op                           |
-| BenchmarkLiGr/name:SyncMap_+_Load_>_Store;number_of_keys:16384-10       | 3867928    | 512.0 ns/op                | 48 B/op                     | 1 allocs/op                           |
-| BenchmarkLiGr/name:SyncMap_+_LoadOrStore;number_of_keys:32768-10        | 4796886    | 380.3 ns/op                | 145 B/op                    | 3 allocs/op                           |
-| BenchmarkLiGr/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:32768-10 | 4463239    | 353.3 ns/op                | 49 B/op                     | 1 allocs/op                           |
-| BenchmarkLiGr/name:SyncMap_+_Load_>_Store;number_of_keys:32768-10       | 3094686    | 328.0 ns/op                | 50 B/op                     | 1 allocs/op                           |
-| BenchmarkLiGr/name:Map_+_Mutex;number_of_keys:32768-10                  | 1600137    | 697.6 ns/op                | 52 B/op                     | 1 allocs/op                           |
-| BenchmarkLiGr/name:Map_+_RWMutex;number_of_keys:32768-10                | 5107765    | 596.4 ns/op                | 49 B/op                     | 1 allocs/op                           |
+[results](./bench/benchmark.txt)
+
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. Make sure to update tests as appropriate.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Authors and Acknowledgments
+
+- [Your Name](https://github.com/yourusername) - Initial work
+
+
