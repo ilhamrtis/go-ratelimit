@@ -11,8 +11,8 @@ import (
 	"github.com/yesyoukenspace/ratelimit"
 )
 
-func BenchmarkLiGr(b *testing.B) {
-	rate := ratelimit.Limit(100 / 60)
+func BenchmarkLimiterGroup(b *testing.B) {
+	rate := ratelimit.ReqPerSec(100 / 60)
 	burst := 100
 	limiterGroups := map[string]ratelimit.LimiterGroup{
 		"SyncMap + LoadOrStore":        &ratelimit.LiGrSyncMapLoadOrStore{R: rate, B: burst},
@@ -25,12 +25,12 @@ func BenchmarkLiGr(b *testing.B) {
 	for _, concurrentUsers := range []int{1028, 2046, 8192, 16384} {
 		runtime.GOMAXPROCS(16)
 		for name, limiter := range limiterGroups {
-			runner(b, name, concurrentUsers, limiter)
+			limiterGroupRunner(b, name, concurrentUsers, limiter)
 		}
 	}
 }
 
-func runner(b *testing.B, name string, numberOfKeys int, limiter ratelimit.LimiterGroup) bool {
+func limiterGroupRunner(b *testing.B, name string, numberOfKeys int, limiter ratelimit.LimiterGroup) bool {
 	return b.Run(fmt.Sprintf("name:%s;number of keys:%d", name, numberOfKeys), func(b *testing.B) {
 		b.ReportAllocs()
 
@@ -78,18 +78,4 @@ func runner(b *testing.B, name string, numberOfKeys int, limiter ratelimit.Limit
 		runtime.KeepAlive(allowed)
 		runtime.KeepAlive(disallowed)
 	})
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

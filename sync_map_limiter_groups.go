@@ -6,7 +6,7 @@ import (
 
 type LiGrSyncMapLoadThenLoadOrStore struct {
 	m sync.Map
-	R Limit
+	R ReqPerSec
 	B int
 }
 
@@ -24,7 +24,7 @@ func (d *LiGrSyncMapLoadThenLoadOrStore) Allow(key string) bool {
 
 type LiGrSyncMapLoadOrStore struct {
 	m sync.Map
-	R Limit
+	R ReqPerSec
 	B int
 }
 
@@ -37,7 +37,7 @@ var _ LimiterGroup = &LiGrSyncMapLoadOrStore{}
 
 type LiGrSyncMapLoadThenStore struct {
 	m sync.Map
-	R Limit
+	R ReqPerSec
 	B int
 }
 

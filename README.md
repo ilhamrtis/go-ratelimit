@@ -6,6 +6,9 @@
 
 This project is in BETA. Contributions and suggestions are welcome.
 
+## Features
+- similar to the familiar `Limiter` in `golang.org/x/time/rate`. 
+
 ## Installation
 
 To install the library, use `go get`:
@@ -15,8 +18,7 @@ go get -u github.com/yesyoukenspace/ratelimit
 ```
 
 ## Usage
-
-All implementations follow the same interface as `golang.org/x/time/rate`. 
+All implementations follow the `LimiterGroup` interface in [domain.go](./domain.go) 
 
 ```go
 package main

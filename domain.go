@@ -4,7 +4,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
-type Limit = rate.Limit
+type ReqPerSec = float64
 
 type Limiter interface {
 	Allow() bool
@@ -14,14 +14,10 @@ type LimiterGroup interface {
 	Allow(string) bool
 }
 
-type DefaultLiGr = LiGrSyncMapLoadThenLoadOrStore
-
-func NewDefaultLiGr(reqPerSec Limit, burst int) *DefaultLiGr {
-	return &DefaultLiGr{R: reqPerSec, B: burst}
+func NewDefaultLiGr(reqPerSec ReqPerSec, burst int) LimiterGroup {
+	return &LiGrSyncMapLoadThenLoadOrStore{R: reqPerSec, B: burst}
 }
 
-type DefaultLimiter = rate.Limiter
-
-func NewDefaultLimiter(reqPerSec Limit, burst int) *DefaultLimiter {
-	return rate.NewLimiter(reqPerSec, burst)
+func NewDefaultLimiter(reqPerSec ReqPerSec, burst int) Limiter {
+	return rate.NewLimiter(rate.Limit(reqPerSec), burst)
 }

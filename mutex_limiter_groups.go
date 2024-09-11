@@ -7,13 +7,13 @@ import (
 type LiGrMutex struct {
 	mu sync.Mutex
 	M  map[string]Limiter
-	R  Limit
+	R  ReqPerSec
 	B  int
 }
 
 var _ LimiterGroup = &LiGrMutex{}
 
-func NewLiGrMutex(reqPerSec Limit, burst int) *LiGrMutex {
+func NewLiGrMutex(reqPerSec ReqPerSec, burst int) *LiGrMutex {
 	return &LiGrMutex{
 		M: make(map[string]Limiter),
 		R: reqPerSec,
@@ -35,11 +35,11 @@ func (d *LiGrMutex) Allow(key string) bool {
 type LiGrRWMutex struct {
 	mu sync.RWMutex
 	M  map[string]Limiter
-	R  Limit
+	R  ReqPerSec
 	B  int
 }
 
-func NewLiGrRWMutex(reqPerSec Limit, burst int) *LiGrRWMutex {
+func NewLiGrRWMutex(reqPerSec ReqPerSec, burst int) *LiGrRWMutex {
 	return &LiGrRWMutex{
 		M: make(map[string]Limiter),
 		R: reqPerSec,
