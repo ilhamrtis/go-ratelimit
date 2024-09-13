@@ -1,8 +1,6 @@
 package ratelimit_test
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"testing"
 	"time"
@@ -12,10 +10,8 @@ import (
 )
 
 func TestLimiterGroupAllow(t *testing.T) {
+	rStr := randString(4)
 	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
-	token := make([]byte, 4)
-	rand.Read(token)
-	randString := base64.StdEncoding.EncodeToString(token)
 	tests := []struct {
 		name            string
 		reqPerSec       ratelimit.ReqPerSec
@@ -81,7 +77,7 @@ func TestLimiterGroupAllow(t *testing.T) {
 			},
 		},
 	}
-	for _, limiterGroup := range limiterGroups[5:] {
+	for _, limiterGroup := range limiterGroups {
 		for _, tt := range tests {
 			t.Run(fmt.Sprintf("liGr=%s;rps=%2f;burst=%d", limiterGroup.name, tt.reqPerSec, tt.burst), func(t *testing.T) {
 				allowed := 0
@@ -93,7 +89,7 @@ func TestLimiterGroupAllow(t *testing.T) {
 				for {
 					select {
 					case <-ticker.C:
-						if limiterGroup.Allow(randString) {
+						if limiterGroup.Allow(rStr) {
 							allowed++
 						} else {
 							denied++

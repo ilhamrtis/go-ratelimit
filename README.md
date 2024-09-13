@@ -53,11 +53,13 @@ Refer to the respective files for implementation details:
 - [sync_map.go](sync_map.go)
 
 ## Benchmarking
+Some benchmarking at [./out/bench](./bench/benchmark.txt)
 
 To benchmark the different implementations, use the following command:
 
 ```bash
-go test -bench ./... -test.count=3 -test.benchtime=1s
+docker compose up -d
+make bench-all
 ```
 
 ### Benchmarking results
@@ -71,7 +73,7 @@ machdep.cpu.thread_count: 10
 machdep.cpu.brand_string: Apple M1 Pro
 ```
 
-[results](./bench/benchmark.txt)
+
 
 
 ## Contributing

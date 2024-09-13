@@ -19,20 +19,20 @@ func BenchmarkLimiter(b *testing.B) {
 		"rate.Limiter": rate.NewLimiter(rate.Limit(R), burst),
 	}
 
-	for _, numberOfGoRoutine := range []int{2, 4, 8} {
-		runtime.GOMAXPROCS(numberOfGoRoutine)
+	for _, numberOfProcs := range []int{2, 4, 8} {
+		runtime.GOMAXPROCS(numberOfProcs)
 		for name, limiter := range limiters {
-			limiterRunner(b, name, numberOfGoRoutine, limiter)
+			limiterRunner(b, name, numberOfProcs, limiter)
 		}
 	}
 }
 
-func limiterRunner(b *testing.B, name string, numberOfGoRoutine int, limiter ratelimit.Limiter) bool {
-	return b.Run(fmt.Sprintf("name:%s;number of goroutines:%d", name, numberOfGoRoutine), func(b *testing.B) {
+func limiterRunner(b *testing.B, name string, numberOfProcs int, limiter ratelimit.Limiter) bool {
+	return b.Run(fmt.Sprintf("name:%s;number of procs:%d", name, numberOfProcs), func(b *testing.B) {
 		b.ReportAllocs()
 
 		n := b.N
-		batchSize := n / numberOfGoRoutine
+		batchSize := n / numberOfProcs
 		var wg sync.WaitGroup
 		if batchSize == 0 {
 			batchSize = n

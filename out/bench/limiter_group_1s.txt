@@ -1,85 +1,53 @@
 goos: darwin
 goarch: arm64
 BenchmarkLimiterGroup
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:1028
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:1028-10         	 3448023	       430.5 ns/op	     217 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:1028-10         	 1000000	      1406 ns/op	     348 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:1028-10         	 2302148	      2861 ns/op	     372 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:1028
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:1028-10  	 2260509	       673.3 ns/op	     147 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:1028-10  	 3097340	       520.2 ns/op	     120 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:1028-10  	 2462254	       479.4 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:1028
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:1028-10        	 2939084	       508.8 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:1028-10        	 2739103	       512.7 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:1028-10        	 2674980	       623.9 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:1028
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:1028-10                   	 1444966	       726.3 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:1028-10                   	 1892619	       684.8 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:1028-10                   	 1796156	      1016 ns/op	      90 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:1028
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:1028-10                 	 2318155	       700.8 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:1028-10                 	 2306786	       613.1 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:1028-10                 	 2095051	       724.0 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:2046
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:2046-10                   	 1659708	       867.3 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:2046-10                   	 1834378	       642.8 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:2046-10                   	 1712910	       703.2 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:2046
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:2046-10                 	 2259642	       645.6 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:2046-10                 	 2127540	       660.1 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:2046-10                 	 2418715	       581.8 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:2046
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:2046-10         	 2357421	       641.3 ns/op	     160 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:2046-10         	 2269854	       626.7 ns/op	     160 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:2046-10         	 2319363	       647.3 ns/op	     160 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:2046
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:2046-10  	 2351332	       702.8 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:2046-10  	 2402523	       692.3 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:2046-10  	 2220715	       681.9 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:2046
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:2046-10        	 2225979	       633.7 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:2046-10        	 2161537	       646.7 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:2046-10        	 2254470	       705.3 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:8192
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:8192-10         	 4238935	       833.0 ns/op	     229 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:8192-10         	 4086126	       609.9 ns/op	     160 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:8192-10         	 3231801	       533.0 ns/op	     160 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:8192
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:8192-10  	 5341627	       819.6 ns/op	     123 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:8192-10  	 4378692	       413.1 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:8192-10  	 3370730	       778.4 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:8192
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:8192-10        	 5486587	      1194 ns/op	     156 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:8192-10        	 5119681	      1420 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:8192-10        	 4271738	       998.9 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:8192
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:8192-10                   	 1921518	       666.5 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:8192-10                   	 2005360	       745.2 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:8192-10                   	 1978131	       769.0 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:8192
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:8192-10                 	 5611370	      1273 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:8192-10                 	 4306228	       969.2 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:8192-10                 	 3465643	       541.9 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:16384
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:16384-10                	 3547267	       477.8 ns/op	      65 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:16384-10                	 6343635	      1074 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:16384-10                	 6276333	      1050 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:2048
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:2048-10         	 4492689	       308.5 ns/op	      98 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:2048-10         	 2506660	       619.2 ns/op	     239 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:2048-10         	 3087190	       741.0 ns/op	     210 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:2048
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:2048-10                    	 1628698	       771.0 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:2048-10                    	 1627610	       900.9 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:2048-10                    	 1640929	       886.3 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:2048
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:2048-10                  	 3091932	       659.3 ns/op	      99 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:2048-10                  	 3030489	       526.1 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:2048-10                  	 2897371	       541.2 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Redis;number_of_keys:2048
+BenchmarkLimiterGroup/name:Redis;number_of_keys:2048-10                          	  555657	      2128 ns/op	     524 B/op	      12 allocs/op
+BenchmarkLimiterGroup/name:Redis;number_of_keys:2048-10                          	  590016	      2125 ns/op	     511 B/op	      12 allocs/op
+BenchmarkLimiterGroup/name:Redis;number_of_keys:2048-10                          	  573806	      2141 ns/op	     519 B/op	      12 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:2048
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:2048-10          	 1941754	       713.0 ns/op	     160 B/op	       3 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:2048-10          	 2870132	       615.9 ns/op	     160 B/op	       3 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:2048-10          	 2641339	       560.6 ns/op	     160 B/op	       3 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:2048
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:2048-10   	 2653602	       622.4 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:2048-10   	 2587969	       602.4 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:2048-10   	 2662968	       611.3 ns/op	      64 B/op	       1 allocs/op
 BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:16384
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:16384-10        	 3930900	       584.2 ns/op	     161 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:16384-10        	 7343184	       959.7 ns/op	     160 B/op	       3 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:16384-10        	 7171405	       477.7 ns/op	     160 B/op	       3 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:16384-10         	 3685899	       369.5 ns/op	     161 B/op	       3 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:16384-10         	 7622343	      3660 ns/op	     337 B/op	       3 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:16384-10         	 6916819	      1911 ns/op	     169 B/op	       3 allocs/op
 BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384-10 	 3627506	       460.0 ns/op	      65 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384-10 	 7964362	       725.7 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384-10 	 7880439	      1350 ns/op	     151 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384-10  	 3373033	       388.5 ns/op	      65 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384-10  	 7501848	      1113 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384-10  	 7455020	      1094 ns/op	     112 B/op	       1 allocs/op
 BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:16384
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:16384-10       	 4276276	       429.0 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:16384-10       	 7110715	       766.5 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:16384-10       	 7245270	      1473 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:16384-10        	 3591256	       473.4 ns/op	      65 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:16384-10        	 7667198	      1122 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:16384-10        	 5072875	      2981 ns/op	      64 B/op	       1 allocs/op
 BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:16384
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:16384-10                  	 1341556	       785.4 ns/op	      91 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:16384-10                  	 1291089	       784.1 ns/op	      96 B/op	       1 allocs/op
-BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:16384-10                  	 1360630	       915.9 ns/op	     103 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:16384-10                   	 1000000	      1139 ns/op	      86 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:16384-10                   	 1000000	      1134 ns/op	      92 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:16384-10                   	 1000000	      1060 ns/op	      79 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:16384
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:16384-10                 	 1000000	      2394 ns/op	     245 B/op	       3 allocs/op
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:16384-10                 	 4010412	      1266 ns/op	      65 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:16384-10                 	 5355538	      1660 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Redis;number_of_keys:16384
+BenchmarkLimiterGroup/name:Redis;number_of_keys:16384-10                         	  557557	      1991 ns/op	     486 B/op	      12 allocs/op
+BenchmarkLimiterGroup/name:Redis;number_of_keys:16384-10                         	  569680	      2438 ns/op	     499 B/op	      12 allocs/op
+BenchmarkLimiterGroup/name:Redis;number_of_keys:16384-10                         	  580623	      2074 ns/op	     490 B/op	      12 allocs/op
 PASS
-ok  	command-line-arguments	380.280s
+ok  	command-line-arguments	288.356s

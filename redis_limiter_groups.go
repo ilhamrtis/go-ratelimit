@@ -31,7 +31,8 @@ func (d *LiGrRedis) AllowN(key string, n int) bool {
 
 	res, err := l.(*redis_rate.Limiter).AllowN(context.Background(), key, d.limit, n)
 	if err != nil {
-		panic(err)
+		// TODO: reconsider this error handling
+		return false
 	}
 	return res.Allowed > 0
 }
@@ -39,7 +40,7 @@ func (d *LiGrRedis) AllowN(key string, n int) bool {
 func NewLiGrRedis(rdb *redis.Client, rps ReqPerSec, burst int) *LiGrRedis {
 	return &LiGrRedis{
 		rdb: rdb,
-		// rate here only works for more than 1 rps
+		// TODO: rate here only works for more than 1 rps, allow for less than 1 rps
 		limit: redis_rate.Limit{Rate: int(rps), Burst: burst, Period: time.Second},
 	}
 }

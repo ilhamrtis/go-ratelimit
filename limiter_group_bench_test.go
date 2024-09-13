@@ -5,25 +5,29 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+	"time"
 
 	"testing"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/yesyoukenspace/ratelimit"
 )
 
 func BenchmarkLimiterGroup(b *testing.B) {
 	rate := ratelimit.ReqPerSec(100 / 60)
 	burst := 100
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379", MaxRetries: -1, DialTimeout: 20 * time.Millisecond, PoolTimeout: 20 * time.Millisecond, ContextTimeoutEnabled: true})
+
 	limiterGroups := map[string]ratelimit.LimiterGroup{
 		"SyncMap + LoadOrStore":        &ratelimit.LiGrSyncMapLoadOrStore{R: rate, B: burst},
 		"SyncMap + Load > LoadOrStore": &ratelimit.LiGrSyncMapLoadThenLoadOrStore{R: rate, B: burst},
 		"SyncMap + Load > Store":       &ratelimit.LiGrSyncMapLoadThenStore{R: rate, B: burst},
 		"Map + Mutex":                  ratelimit.NewLiGrMutex(rate, burst),
 		"Map + RWMutex":                ratelimit.NewLiGrRWMutex(rate, burst),
+		"Redis":                        ratelimit.NewLiGrRedis(rdb, rate, burst),
 	}
 
-	for _, concurrentUsers := range []int{1028, 2046, 8192, 16384} {
-		runtime.GOMAXPROCS(16)
+	for _, concurrentUsers := range []int{2048, 16384} {
 		for name, limiter := range limiterGroups {
 			limiterGroupRunner(b, name, concurrentUsers, limiter)
 		}
@@ -31,6 +35,7 @@ func BenchmarkLimiterGroup(b *testing.B) {
 }
 
 func limiterGroupRunner(b *testing.B, name string, numberOfKeys int, limiter ratelimit.LimiterGroup) bool {
+	rStr := randString(4)
 	return b.Run(fmt.Sprintf("name:%s;number of keys:%d", name, numberOfKeys), func(b *testing.B) {
 		b.ReportAllocs()
 
@@ -68,7 +73,7 @@ func limiterGroupRunner(b *testing.B, name string, numberOfKeys int, limiter rat
 				}
 				wg.Wait()
 				wgg.Done()
-			}(strconv.Itoa(key), batch)
+			}(fmt.Sprintf("%s#%s", strconv.Itoa(key), rStr), batch)
 			key++
 		}
 		b.StartTimer()

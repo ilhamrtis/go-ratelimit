@@ -1,0 +1,29 @@
+goos: darwin
+goarch: arm64
+BenchmarkLimiterGroup
+BenchmarkLimiterGroup/name:Redis;number_of_keys:2048
+BenchmarkLimiterGroup/name:Redis;number_of_keys:2048-10         	 4890298	      2402 ns/op	     578 B/op	      12 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:2048
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:2048-10         	20790375	      1067 ns/op	     216 B/op	       3 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:2048
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:2048-10  	14764066	      1020 ns/op	      72 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:2048
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:2048-10        	13653823	      1147 ns/op	     108 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:2048
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:2048-10                   	13865024	      4865 ns/op	     242 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:2048
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:2048-10                 	 9524128	      1659 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:16384
+BenchmarkLimiterGroup/name:SyncMap_+_LoadOrStore;number_of_keys:16384-10        	22450240	      2740 ns/op	     199 B/op	       3 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384-10 	21582841	      1764 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:16384
+BenchmarkLimiterGroup/name:SyncMap_+_Load_>_Store;number_of_keys:16384-10       	17290939	       953.5 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:16384
+BenchmarkLimiterGroup/name:Map_+_Mutex;number_of_keys:16384-10                  	17454212	      2091 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:16384
+BenchmarkLimiterGroup/name:Map_+_RWMutex;number_of_keys:16384-10                	 5062365	      3503 ns/op	      86 B/op	       1 allocs/op
+BenchmarkLimiterGroup/name:Redis;number_of_keys:16384
+BenchmarkLimiterGroup/name:Redis;number_of_keys:16384-10                        	 4583932	      3753 ns/op	     523 B/op	      12 allocs/op
+PASS
+ok  	command-line-arguments	610.054s
