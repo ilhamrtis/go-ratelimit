@@ -7,11 +7,11 @@ test:
 	go test ./... -v -parallel=8
 
 bench-all: bench-limiter
-	TEST_BENCHTIME="1s" $(MAKE) bench-limiter-group
-	TEST_COUNT=1 TEST_BENCHTIME="10s" $(MAKE) bench-limiter-group
+	TEST_BENCHTIME="1s" $(MAKE) bench-ratelimit
+	TEST_COUNT=1 TEST_BENCHTIME="10s" $(MAKE) bench-ratelimit
 
 bench-limiter:
-	go test limiter_bench_test.go -v -bench=. -test.count=$(TEST_COUNT) > out/bench/limiter.txt 
+	go test ./v1/ratelimit/ratelimit_bench_test.go -v -bench=. -test.count=$(TEST_COUNT) > out/bench/limiter/limiter.txt 
 
-bench-limiter-group:
-	go test limiter_group_bench_test.go utils_test.go -v -bench=. -test.count=$(TEST_COUNT) -test.benchtime=$(TEST_BENCHTIME) > out/bench/limiter_group_$(TEST_BENCHTIME).txt
+bench-ratelimit:
+	go test ./v1/ratelimit/ratelimit_bench_test.go -v -bench=. -test.count=$(TEST_COUNT) -test.benchtime=$(TEST_BENCHTIME) > out/bench/ratelimit/$(TEST_BENCHTIME).txt

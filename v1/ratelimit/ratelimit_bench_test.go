@@ -1,4 +1,4 @@
-package ratelimit_test
+package ratelimit
 
 import (
 	"fmt"
@@ -10,32 +10,32 @@ import (
 	"testing"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yesyoukenspace/ratelimit"
+	"github.com/yesyoukenspace/go-ratelimit/internal/utils"
 )
 
-func BenchmarkLimiterGroup(b *testing.B) {
-	rate := ratelimit.ReqPerSec(100 / 60)
+func BenchmarkRatelimiters(b *testing.B) {
+	rate := (100.0 / 60)
 	burst := 100
 	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379", MaxRetries: -1, DialTimeout: 20 * time.Millisecond, PoolTimeout: 20 * time.Millisecond, ContextTimeoutEnabled: true})
 
-	limiterGroups := map[string]ratelimit.LimiterGroup{
-		"SyncMap + LoadOrStore":        &ratelimit.LiGrSyncMapLoadOrStore{R: rate, B: burst},
-		"SyncMap + Load > LoadOrStore": &ratelimit.LiGrSyncMapLoadThenLoadOrStore{R: rate, B: burst},
-		"SyncMap + Load > Store":       &ratelimit.LiGrSyncMapLoadThenStore{R: rate, B: burst},
-		"Map + Mutex":                  ratelimit.NewLiGrMutex(rate, burst),
-		"Map + RWMutex":                ratelimit.NewLiGrRWMutex(rate, burst),
-		"Redis":                        ratelimit.NewLiGrRedis(rdb, rate, burst),
+	ratelimiters := map[string]Ratelimiter{
+		"SyncMap + LoadOrStore":        &SyncMapLoadOrStore{R: rate, B: burst},
+		"SyncMap + Load > LoadOrStore": &SyncMapLoadThenLoadOrStore{R: rate, B: burst},
+		"SyncMap + Load > Store":       &SyncMapLoadThenStore{R: rate, B: burst},
+		"Map + Mutex":                  NewMutex(nil, rate, burst),
+		"Map + RWMutex":                NewRWMutex(nil, rate, burst),
+		"Redis":                        NewGoRedis(rdb, rate, burst),
 	}
 
 	for _, concurrentUsers := range []int{2048, 16384} {
-		for name, limiter := range limiterGroups {
-			limiterGroupRunner(b, name, concurrentUsers, limiter)
+		for name, limiter := range ratelimiters {
+			ratelimitRunner(b, name, concurrentUsers, limiter)
 		}
 	}
 }
 
-func limiterGroupRunner(b *testing.B, name string, numberOfKeys int, limiter ratelimit.LimiterGroup) bool {
-	rStr := randString(4)
+func ratelimitRunner(b *testing.B, name string, numberOfKeys int, limiter Ratelimiter) bool {
+	rStr := utils.RandString(4)
 	return b.Run(fmt.Sprintf("name:%s;number of keys:%d", name, numberOfKeys), func(b *testing.B) {
 		b.ReportAllocs()
 
@@ -63,7 +63,7 @@ func limiterGroupRunner(b *testing.B, name string, numberOfKeys int, limiter rat
 				defer mu.RUnlock()
 				for i := 0; i < quota; i++ {
 					go func() {
-						if limiter.Allow(k) {
+						if ok, _ := limiter.Allow(k); ok {
 							allowed++
 						} else {
 							disallowed++

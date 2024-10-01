@@ -7,7 +7,6 @@
 This project is in BETA. Contributions and suggestions are welcome.
 
 ## Features
-- similar to the familiar `Limiter` in `golang.org/x/time/rate`. 
 
 ## Installation
 
@@ -18,20 +17,20 @@ go get -u github.com/yesyoukenspace/ratelimit
 ```
 
 ## Usage
-All implementations follow the `LimiterGroup` interface in [domain.go](./domain.go) 
+All `limiter.Limiter` implementations follow the `Ratelimit` interface in [domain.go](./domain.go) 
 
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/yesyoukenspace/ratelimit"
+	"github.com/yesyoukenspace/go-ratelimit/v1"
 )
 
 func main() {
-	limiterGroup := ratelimit.NewDefaultLiGr(10, 5)
+	ratelimiter := ratelimit.NewDefault(10, 5)
 	key := "user123"
-	if limiterGroup.Allow(key) {
+	if ok, _ := ratelimiter.Allow(key); ok {
 		fmt.Println("Request allowed")
 	} else {
 		fmt.Println("Request denied")
@@ -42,11 +41,11 @@ func main() {
 ### Available Implementations
 Here are the available implementations:
 
-- **LiGrMutex**: Uses `sync.Mutex`.
-- **LiGrRWMutex**: Uses `sync.RWMutex`.
-- **LiGrSyncMapLoadThenLoadOrStore**: Uses `sync.Map` with `Load` then `LoadOrStore`.
-- **LiGrSyncMapLoadOrStore**: Uses `sync.Map` with `LoadOrStore`.
-- **LiGrSyncMapLoadThenStore**: Uses `sync.Map` with `Load` then `Store`.
+- **Mutex**: Uses `sync.Mutex`.
+- **RWMutex**: Uses `sync.RWMutex`.
+- **SyncMapLoadThenLoadOrStore**: Uses `sync.Map` with `Load` then `LoadOrStore`.
+- **SyncMapLoadOrStore**: Uses `sync.Map` with `LoadOrStore`.
+- **SyncMapLoadThenStore**: Uses `sync.Map` with `Load` then `Store`.
 
 Refer to the respective files for implementation details:
 - [mutex.go](mutex.go)

@@ -1,4 +1,4 @@
-package ratelimit_test
+package limiter
 
 import (
 	"fmt"
@@ -7,16 +7,15 @@ import (
 
 	"testing"
 
-	"github.com/yesyoukenspace/ratelimit"
 	"golang.org/x/time/rate"
 )
 
 func BenchmarkLimiter(b *testing.B) {
-	R := ratelimit.ReqPerSec(100 / 60)
+	r := (100.0 / 60)
 	burst := 100
-	limiters := map[string]ratelimit.Limiter{
-		"Bucket":       ratelimit.NewBucket(R, burst),
-		"rate.Limiter": rate.NewLimiter(rate.Limit(R), burst),
+	limiters := map[string]Limiter{
+		"Bucket":       NewBucket(r, burst),
+		"rate.Limiter": NewSimpleLimiterAdapter(rate.NewLimiter(rate.Limit(r), burst)),
 	}
 
 	for _, numberOfProcs := range []int{2, 4, 8} {
@@ -27,7 +26,7 @@ func BenchmarkLimiter(b *testing.B) {
 	}
 }
 
-func limiterRunner(b *testing.B, name string, numberOfProcs int, limiter ratelimit.Limiter) bool {
+func limiterRunner(b *testing.B, name string, numberOfProcs int, limiter Limiter) bool {
 	return b.Run(fmt.Sprintf("name:%s;number of procs:%d", name, numberOfProcs), func(b *testing.B) {
 		b.ReportAllocs()
 
@@ -51,7 +50,7 @@ func limiterRunner(b *testing.B, name string, numberOfProcs int, limiter ratelim
 				mu.RLock()
 				defer mu.RUnlock()
 				for i := 0; i < quota; i++ {
-					if limiter.Allow() {
+					if ok, _ := limiter.Allow(); ok {
 						allowed++
 					} else {
 						disallowed++

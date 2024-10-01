@@ -1,59 +1,60 @@
-package ratelimit_test
+package limiter
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/yesyoukenspace/ratelimit"
+	"github.com/yesyoukenspace/go-ratelimit/internal/utils"
 	"golang.org/x/time/rate"
 )
+
+var limiters = []struct {
+	name        string
+	constructor func(float64, int) Limiter
+}{
+	{
+		name: "golang.org/x/time/rate",
+		constructor: func(limit float64, burst int) Limiter {
+			return NewSimpleLimiterAdapter(rate.NewLimiter(rate.Limit(limit), burst))
+		},
+	},
+	{
+		name: "Bucket",
+		constructor: func(limit float64, burst int) Limiter {
+			return NewBucket(limit, burst)
+		},
+	},
+}
 
 func TestLimiterAllow(t *testing.T) {
 	tests := []struct {
 		name            string
-		reqPerSec       ratelimit.ReqPerSec
+		reqPerSec       float64
 		burst           int
 		runFor          time.Duration
 		expectedAllowed int
 		tolerance       float64
 	}{
 		{
-			reqPerSec:       100,
-			burst:           100,
-			runFor:          5 * time.Second,
-			expectedAllowed: 600,
+			reqPerSec:       10,
+			burst:           1,
+			runFor:          3 * time.Second,
+			expectedAllowed: 31,
 			tolerance:       1,
 		},
 		{
 			reqPerSec:       1,
 			burst:           100,
-			runFor:          5 * time.Second,
-			expectedAllowed: 105,
+			runFor:          3 * time.Second,
+			expectedAllowed: 103,
 			tolerance:       1,
 		},
 	}
 
-	limiters := []struct {
-		name        string
-		constructor func(ratelimit.ReqPerSec, int) ratelimit.Limiter
-	}{
-		{
-			name: "golang.org/x/time/rate",
-			constructor: func(limit ratelimit.ReqPerSec, burst int) ratelimit.Limiter {
-				return rate.NewLimiter(rate.Limit(limit), burst)
-			},
-		},
-		{
-			name: "Bucket",
-			constructor: func(limit ratelimit.ReqPerSec, burst int) ratelimit.Limiter {
-				return ratelimit.NewBucket(limit, burst)
-			},
-		},
-	}
 	for _, limiter := range limiters {
 		for _, tt := range tests {
-			t.Run(fmt.Sprintf("liGr=%s;rps=%2f;burst=%d", limiter.name, tt.reqPerSec, tt.burst), func(t *testing.T) {
+			t.Run(fmt.Sprintf("limiter=%s;rps=%2f;burst=%d", limiter.name, tt.reqPerSec, tt.burst), func(t *testing.T) {
 				allowed := 0
 				denied := 0
 				ticker := time.NewTicker(time.Millisecond / 2)
@@ -63,7 +64,7 @@ func TestLimiterAllow(t *testing.T) {
 				for {
 					select {
 					case <-ticker.C:
-						if limiter.Allow() {
+						if ok, _ := limiter.Allow(); ok {
 							allowed++
 						} else {
 							denied++
@@ -73,7 +74,7 @@ func TestLimiterAllow(t *testing.T) {
 						break L
 					}
 				}
-				if !isCloseEnough(float64(tt.expectedAllowed), float64(allowed), tt.tolerance) {
+				if !utils.IsCloseEnough(float64(tt.expectedAllowed), float64(allowed), tt.tolerance) {
 					t.Errorf("expected %d, got %d", tt.expectedAllowed, allowed)
 				}
 				if allowed+denied < int(tt.reqPerSec)*int(tt.runFor.Seconds()) {

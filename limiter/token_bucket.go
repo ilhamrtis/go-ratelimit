@@ -1,4 +1,4 @@
-package ratelimit
+package limiter
 
 import (
 	"sync"
@@ -7,13 +7,13 @@ import (
 
 type Bucket struct {
 	B         float64
-	R         ReqPerSec
+	R         float64
 	remaining float64
 	lastCheck time.Time
 	mu        sync.Mutex
 }
 
-func NewBucket(rate ReqPerSec, burst int) *Bucket {
+func NewBucket(rate float64, burst int) *Bucket {
 	return &Bucket{
 		B:         float64(burst),
 		remaining: float64(burst),
@@ -22,12 +22,12 @@ func NewBucket(rate ReqPerSec, burst int) *Bucket {
 	}
 }
 
-func (b *Bucket) AllowN(n int) bool {
+func (b *Bucket) AllowN(n int) (bool, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	now := time.Now()
-	leak := float64(now.Second()-b.lastCheck.Second()) * b.R
+	leak := now.Sub(b.lastCheck).Seconds() * b.R
 
 	if leak > 0 {
 		if b.remaining+leak > b.B {
@@ -40,12 +40,12 @@ func (b *Bucket) AllowN(n int) bool {
 	nFloat := float64(n)
 	if b.remaining >= nFloat {
 		b.remaining -= nFloat
-		return true
+		return true, nil
 	} else {
-		return false
+		return false, nil
 	}
 }
 
-func (b *Bucket) Allow() bool {
+func (b *Bucket) Allow() (bool, error) {
 	return b.AllowN(1)
 }
