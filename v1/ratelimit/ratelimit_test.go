@@ -10,7 +10,7 @@ import (
 )
 
 func TestAllow(t *testing.T) {
-	rStr := utils.RandString(4)
+
 	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	tests := []struct {
 		name            string
@@ -80,6 +80,8 @@ func TestAllow(t *testing.T) {
 	for _, ratelimiter := range ratelimiters {
 		for _, tt := range tests {
 			t.Run(fmt.Sprintf("ratelimiter=%s;rps=%2f;burst=%d", ratelimiter.name, tt.reqPerSec, tt.burst), func(t *testing.T) {
+				rStr := utils.RandString(4)
+				t.Parallel()
 				allowed := 0
 				denied := 0
 				ticker := time.NewTicker(time.Millisecond)
@@ -103,7 +105,7 @@ func TestAllow(t *testing.T) {
 					t.Errorf("expected %d, got %d", tt.expectedAllowed, allowed)
 				}
 				if allowed+denied < int(tt.reqPerSec)*int(tt.runFor.Seconds()) {
-					t.Errorf("expected >%d runs, got %d", int(tt.reqPerSec)*int(tt.runFor.Seconds()), allowed+denied)
+					t.Errorf("expected >%d total requests, got %d", int(tt.reqPerSec)*int(tt.runFor.Seconds()), allowed+denied)
 				}
 			})
 		}

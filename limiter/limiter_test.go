@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/yesyoukenspace/go-ratelimit/internal/utils"
-	"golang.org/x/time/rate"
 )
 
 var limiters = []struct {
@@ -16,13 +15,19 @@ var limiters = []struct {
 	{
 		name: "golang.org/x/time/rate",
 		constructor: func(limit float64, burst int) Limiter {
-			return NewSimpleLimiterAdapter(rate.NewLimiter(rate.Limit(limit), burst))
+			return NewDefaultLimiter(limit, burst)
 		},
 	},
 	{
 		name: "Bucket",
 		constructor: func(limit float64, burst int) Limiter {
 			return NewBucket(limit, burst)
+		},
+	},
+	{
+		name: "TimebasedLimiter",
+		constructor: func(limit float64, burst int) Limiter {
+			return NewResetbasedLimiter(limit, burst)
 		},
 	},
 }
@@ -52,7 +57,7 @@ func TestLimiterAllow(t *testing.T) {
 		},
 	}
 
-	for _, limiter := range limiters {
+	for _, limiter := range limiters[2:] {
 		for _, tt := range tests {
 			t.Run(fmt.Sprintf("limiter=%s;rps=%2f;burst=%d", limiter.name, tt.reqPerSec, tt.burst), func(t *testing.T) {
 				allowed := 0

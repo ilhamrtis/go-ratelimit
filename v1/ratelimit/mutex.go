@@ -28,7 +28,7 @@ func NewMutex(constuctor NewLimiterFn, reqPerSec float64, burst int) *Mutex {
 	}
 }
 
-func (d *Mutex) Allow(key string) (bool, error) {
+func (d *Mutex) AllowN(key string, n int) (bool, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	l, ok := d.M[key]
@@ -36,7 +36,11 @@ func (d *Mutex) Allow(key string) (bool, error) {
 		l = NewDefaultLimiter(d.R, d.B)
 		d.M[key] = l
 	}
-	return l.Allow()
+	return l.AllowN(n)
+}
+
+func (d *Mutex) Allow(key string) (bool, error) {
+	return d.AllowN(key, 1)
 }
 
 type RWMutex struct {
@@ -59,17 +63,21 @@ func NewRWMutex(constructor NewLimiterFn, reqPerSec float64, burst int) *RWMutex
 	}
 }
 
-func (d *RWMutex) Allow(key string) (bool, error) {
+func (d *RWMutex) AllowN(key string, n int) (bool, error) {
 	d.mu.RLock()
 	l, ok := d.M[key]
 	if !ok {
 		d.mu.RUnlock()
 		d.mu.Lock()
 		defer d.mu.Unlock()
-		l = NewDefaultLimiter(d.R, d.B)
+		l = d.c(d.R, d.B)
 		d.M[key] = l
 	} else {
 		d.mu.RUnlock()
 	}
-	return l.Allow()
+	return l.AllowN(n)
+}
+
+func (d *RWMutex) Allow(key string) (bool, error) {
+	return d.AllowN(key, 1)
 }

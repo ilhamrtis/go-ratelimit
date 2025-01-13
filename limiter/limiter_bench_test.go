@@ -6,16 +6,15 @@ import (
 	"sync"
 
 	"testing"
-
-	"golang.org/x/time/rate"
 )
 
 func BenchmarkLimiter(b *testing.B) {
 	r := (100.0 / 60)
 	burst := 100
 	limiters := map[string]Limiter{
-		"Bucket":       NewBucket(r, burst),
-		"rate.Limiter": NewSimpleLimiterAdapter(rate.NewLimiter(rate.Limit(r), burst)),
+		"Bucket":            NewBucket(r, burst),
+		"DefaultLimiter":    NewDefaultLimiter(r, burst),
+		"ResetBasedLimiter": NewResetbasedLimiter(r, burst),
 	}
 
 	for _, numberOfProcs := range []int{2, 4, 8} {

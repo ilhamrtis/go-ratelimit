@@ -23,10 +23,9 @@ func NewBucket(rate float64, burst int) *Bucket {
 }
 
 func (b *Bucket) AllowN(n int) (bool, error) {
+	now := time.Now()
 	b.mu.Lock()
 	defer b.mu.Unlock()
-
-	now := time.Now()
 	leak := now.Sub(b.lastCheck).Seconds() * b.R
 
 	if leak > 0 {
