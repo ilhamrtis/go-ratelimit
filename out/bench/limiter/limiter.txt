@@ -1,0 +1,25 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/yesyoukenspace/go-ratelimit/limiter
+cpu: Apple M1 Pro
+BenchmarkLimiter
+BenchmarkLimiter/name:Bucket;number_of_procs:2
+BenchmarkLimiter/name:Bucket;number_of_procs:2-10         	20410806	        55.60 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/name:DefaultLimiter;number_of_procs:2
+BenchmarkLimiter/name:DefaultLimiter;number_of_procs:2-10 	13941282	        84.39 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/name:ResetBasedLimiter;number_of_procs:2
+BenchmarkLimiter/name:ResetBasedLimiter;number_of_procs:2-10         	23602417	        52.22 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/name:Bucket;number_of_procs:4
+BenchmarkLimiter/name:Bucket;number_of_procs:4-10                    	13716747	        86.99 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/name:DefaultLimiter;number_of_procs:4
+BenchmarkLimiter/name:DefaultLimiter;number_of_procs:4-10            	 9701660	       123.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/name:ResetBasedLimiter;number_of_procs:4
+BenchmarkLimiter/name:ResetBasedLimiter;number_of_procs:4-10         	14984726	        82.58 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/name:Bucket;number_of_procs:8
+BenchmarkLimiter/name:Bucket;number_of_procs:8-10                    	 7533236	       159.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/name:DefaultLimiter;number_of_procs:8
+BenchmarkLimiter/name:DefaultLimiter;number_of_procs:8-10            	 6732279	       179.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/name:ResetBasedLimiter;number_of_procs:8
+BenchmarkLimiter/name:ResetBasedLimiter;number_of_procs:8-10         	 8528546	       143.4 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/yesyoukenspace/go-ratelimit/limiter	13.113s

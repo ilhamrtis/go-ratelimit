@@ -25,7 +25,7 @@ var limiters = []struct {
 		},
 	},
 	{
-		name: "TimebasedLimiter",
+		name: "ResetbasedLimiter",
 		constructor: func(limit float64, burst int) Limiter {
 			return NewResetbasedLimiter(limit, burst)
 		},
@@ -42,22 +42,29 @@ func TestLimiterAllow(t *testing.T) {
 		tolerance       float64
 	}{
 		{
-			reqPerSec:       10,
-			burst:           1,
+			reqPerSec:       100,
+			burst:           10,
 			runFor:          3 * time.Second,
-			expectedAllowed: 31,
-			tolerance:       1,
+			expectedAllowed: 310,
+			tolerance:       0.001,
 		},
 		{
-			reqPerSec:       1,
+			reqPerSec:       10,
 			burst:           100,
 			runFor:          3 * time.Second,
-			expectedAllowed: 103,
-			tolerance:       1,
+			expectedAllowed: 130,
+			tolerance:       0.001,
+		},
+		{
+			reqPerSec:       100,
+			burst:           200,
+			runFor:          3 * time.Second,
+			expectedAllowed: 500,
+			tolerance:       0.001,
 		},
 	}
 
-	for _, limiter := range limiters[2:] {
+	for _, limiter := range limiters {
 		for _, tt := range tests {
 			t.Run(fmt.Sprintf("limiter=%s;rps=%2f;burst=%d", limiter.name, tt.reqPerSec, tt.burst), func(t *testing.T) {
 				allowed := 0

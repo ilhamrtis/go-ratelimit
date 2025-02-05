@@ -28,15 +28,25 @@ func NewMutex(constuctor NewLimiterFn, reqPerSec float64, burst int) *Mutex {
 	}
 }
 
-func (d *Mutex) AllowN(key string, n int) (bool, error) {
+func (d *Mutex) getLimiter(key string) limiter.Limiter {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	l, ok := d.M[key]
 	if !ok {
-		l = NewDefaultLimiter(d.R, d.B)
+		l = d.c(d.R, d.B)
 		d.M[key] = l
 	}
+	return l
+}
+
+func (d *Mutex) AllowN(key string, n int) (bool, error) {
+	l := d.getLimiter(key)
 	return l.AllowN(n)
+}
+
+func (d *Mutex) ForceN(key string, n int) (bool, error) {
+	l := d.getLimiter(key)
+	return l.ForceN(n)
 }
 
 func (d *Mutex) Allow(key string) (bool, error) {
@@ -63,19 +73,27 @@ func NewRWMutex(constructor NewLimiterFn, reqPerSec float64, burst int) *RWMutex
 	}
 }
 
-func (d *RWMutex) AllowN(key string, n int) (bool, error) {
+func (d *RWMutex) getLimiter(key string) limiter.Limiter {
 	d.mu.RLock()
 	l, ok := d.M[key]
+	d.mu.RUnlock()
 	if !ok {
-		d.mu.RUnlock()
 		d.mu.Lock()
 		defer d.mu.Unlock()
 		l = d.c(d.R, d.B)
 		d.M[key] = l
-	} else {
-		d.mu.RUnlock()
 	}
+	return l
+}
+
+func (d *RWMutex) AllowN(key string, n int) (bool, error) {
+	l := d.getLimiter(key)
 	return l.AllowN(n)
+}
+
+func (d *RWMutex) ForceN(key string, n int) (bool, error) {
+	l := d.getLimiter(key)
+	return l.ForceN(n)
 }
 
 func (d *RWMutex) Allow(key string) (bool, error) {

@@ -2,106 +2,153 @@ package ratelimit
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/yesyoukenspace/go-ratelimit/limiter"
 )
 
-type RedisWithDelay struct {
-	DelayInMs int
-	ctx       context.Context
-	inner     Ratelimiter
+type rl1[l limiter.Limiter] struct {
+	m     sync.Map
+	rps   float64
+	burst int
 }
 
-var _ Ratelimiter = &RedisWithDelay{}
-
-func NewRedisWithDelay(inner Ratelimiter, delayInMs int) *RedisWithDelay {
-	return &RedisWithDelay{
-		DelayInMs: delayInMs,
-		inner:     inner,
+func NewRl1[L limiter.Limiter](rps float64, burst int) *rl1[L] {
+	return &rl1[L]{
+		rps:   rps,
+		burst: burst,
+		m:     sync.Map{},
 	}
 }
 
-// Allow implements Ratelimiter.
+func (r *rl1[L]) AllowN(key string, n int) (bool, error) {
+	l, ok := r.m.Load(key)
+	if !ok {
+		l = limiter.NewResetbasedLimiter(r.rps, r.burst)
+		r.m.Store(key, l)
+
+	}
+	return l.(L).AllowN(n)
+}
+
+func (r *rl1[L]) GetLimiter(key string) L {
+	l, ok := r.m.Load(key)
+	if !ok {
+		l = limiter.NewResetbasedLimiter(r.rps, r.burst)
+		r.m.Store(key, l)
+	}
+	return l.(L)
+}
+
+func (r *rl1[l]) Allow(key string) (bool, error) {
+	return r.AllowN(key, 1)
+}
+
+type RedisWithDelay struct {
+	syncInterval time.Duration
+	ctx          context.Context
+	cancel       context.CancelFunc
+	inner        *rl1[*limiter.ResetBasedLimiter]
+	rdb          *redis.Client
+	currentIndex int
+	toSync       []map[string]struct{}
+	lastSynced   map[string]int64
+	opt          RedisWithDelayOption
+	burstInMs    float64
+}
+
+type RedisWithDelayOption struct {
+	SyncInterval  time.Duration
+	RequestPerSec float64
+	Burst         int
+
+	RedisClient *redis.Client
+}
+
+func NewRedisWithDelay(ctx context.Context, opt RedisWithDelayOption) *RedisWithDelay {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ctx, cancel := context.WithCancel(ctx)
+
+	rl := &RedisWithDelay{
+		ctx:          ctx,
+		cancel:       cancel,
+		rdb:          opt.RedisClient,
+		syncInterval: opt.SyncInterval,
+		inner:        NewRl1[*limiter.ResetBasedLimiter](opt.RequestPerSec, opt.Burst),
+		toSync:       []map[string]struct{}{{}, {}},
+		lastSynced:   map[string]int64{},
+		opt:          opt,
+		burstInMs:    float64(opt.Burst) / opt.RequestPerSec * 1000,
+	}
+	go func() {
+		ticker := time.NewTicker(opt.SyncInterval)
+		for {
+			select {
+			case <-ctx.Done():
+				ticker.Stop()
+				return
+			case <-ticker.C:
+				indexToSync := rl.currentIndex
+				nextIndex := (rl.currentIndex + 1) % len(rl.toSync)
+				rl.toSync[nextIndex] = map[string]struct{}{}
+				rl.currentIndex = nextIndex
+				if err := rl.syncAll(indexToSync); err != nil {
+					// TODO: handle error
+					fmt.Printf("error syncing: %v\n", err)
+				}
+			}
+		}
+	}()
+	return rl
+}
+
 func (r *RedisWithDelay) Allow(key string) (bool, error) {
 	return r.AllowN(key, 1)
 }
 
-// AllowN implements Ratelimiter.
 func (r *RedisWithDelay) AllowN(key string, n int) (bool, error) {
 	ok, err := r.inner.AllowN(key, n)
-	if err != nil {
-		return false, err
+	if ok {
+		r.toSync[r.currentIndex][key] = struct{}{}
 	}
-	if !ok {
-		return ok, err
-	}
-	go r.queueSync(key, n)
 	return ok, err
 }
 
-var syncLimits = redis.NewScript(`
--- this script has side-effects, so it requires replicate commands mode
-redis.replicate_commands()
+func (r *RedisWithDelay) syncAll(index int) error {
+	for key, _ := range r.toSync[index] {
+		if err := r.sync(key); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-local rate_limit_key = KEYS[1]
-local burst = ARGV[1]
-local rate = ARGV[2]
-local period = ARGV[3]
-local cost = tonumber(ARGV[4])
+func (r *RedisWithDelay) sync(key string) error {
+	limiter := r.inner.GetLimiter(key)
+	incrementInMs := limiter.PopDeltaSinceInMs()
+	if r.lastSynced[key] == 0 {
+		resetAt := limiter.GetResetAt()
+		cmd := r.rdb.SetNX(r.ctx, key, int64(resetAt), time.Hour*48)
+		if cmd.Err() != nil {
+			return cmd.Err()
+		}
+		r.lastSynced[key] = int64(resetAt)
+	}
+	cmd := r.rdb.IncrBy(r.ctx, key, int64(incrementInMs))
+	if cmd.Err() != nil {
+		return cmd.Err()
+	}
 
-local emission_interval = period / rate
-local increment = emission_interval * cost
-local burst_offset = emission_interval * burst
-
--- redis returns time as an array containing two integers: seconds of the epoch
--- time (10 digits) and microseconds (6 digits). for convenience we need to
--- convert them to a floating point number. the resulting number is 16 digits,
--- bordering on the limits of a 64-bit double-precision floating point number.
--- adjust the epoch to be relative to Jan 1, 2017 00:00:00 GMT to avoid floating
--- point problems. this approach is good until "now" is 2,483,228,799 (Wed, 09
--- Sep 2048 01:46:39 GMT), when the adjusted value is 16 digits.
-local jan_1_2017 = 1483228800
-local now = redis.call("TIME")
-now = (now[1] - jan_1_2017) + (now[2] / 1000000)
-
-local tat = redis.call("GET", rate_limit_key)
-
-if not tat then
-  tat = now
-else
-  tat = tonumber(tat)
-end
-
-tat = math.max(tat, now)
-
-local new_tat = tat + increment
-local allow_at = new_tat - burst_offset
-
-local diff = now - allow_at
-local remaining = diff / emission_interval
-
-if remaining < 0 then
-  local reset_after = tat - now
-  local retry_after = diff * -1
-  return {
-    0, -- allowed
-    0, -- remaining
-    tostring(retry_after),
-    tostring(reset_after),
-  }
-end
-
-local reset_after = new_tat - now
-if reset_after > 0 then
-  redis.call("SET", rate_limit_key, new_tat, "EX", math.ceil(reset_after))
-end
-local retry_after = -1
-return {cost, remaining, tostring(retry_after), tostring(reset_after)}
-`)
-
-func (r *RedisWithDelay) queueSync(key string, n int) {
-	time.AfterFunc(time.Duration(r.DelayInMs)*time.Millisecond, func() {
-		syncLimits.Run(r.ctx, r.inner.(*GoRedisRate).rdb, []string{key}, r.inner.(*GoRedisRate).limit.Burst, r.inner.(*GoRedisRate).limit.Rate, r.inner.(*GoRedisRate).limit.Period.Seconds(), n)
-	})
+	sharedResetAt := float64(cmd.Val())
+	diff := sharedResetAt - float64(r.lastSynced[key]) - incrementInMs
+	if diff > 0 {
+		limiter.IncrementResetAtBy(float64(diff))
+	}
+	r.lastSynced[key] = int64(sharedResetAt)
+	return nil
 }

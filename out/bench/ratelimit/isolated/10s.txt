@@ -1,0 +1,63 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/yesyoukenspace/go-ratelimit/v1/ratelimit
+cpu: Apple M1 Pro
+BenchmarkIsolated
+BenchmarkIsolated/SyncMap_+_LoadOrStore;number_of_keys:2048
+BenchmarkIsolated/SyncMap_+_LoadOrStore;number_of_keys:2048-10         	192845499	        54.85 ns/op	     104 B/op	       3 allocs/op
+ratelimiter=SyncMap + LoadOrStore	allowed=351218.000000	disallowed=192494281.000000	lapsed=10.577352
+ratelimiter=SyncMap + LoadOrStore	allowed(rps)=33204.717867	total(rps)=18231925.431693
+BenchmarkIsolated/SyncMap_+_Load_>_LoadOrStore;number_of_keys:2048
+BenchmarkIsolated/SyncMap_+_Load_>_LoadOrStore;number_of_keys:2048-10  	691870648	        21.57 ns/op	       0 B/op	       0 allocs/op
+ratelimiter=SyncMap + Load > LoadOrStore	allowed=266290.000000	disallowed=691604358.000000	lapsed=14.925502
+ratelimiter=SyncMap + Load > LoadOrStore	allowed(rps)=17841.276407	total(rps)=46354934.352165
+BenchmarkIsolated/SyncMap_+_Load_>_Store;number_of_keys:2048
+BenchmarkIsolated/SyncMap_+_Load_>_Store;number_of_keys:2048-10        	686141882	        18.00 ns/op	       0 B/op	       0 allocs/op
+ratelimiter=SyncMap + Load > Store	allowed=246795.000000	disallowed=685895087.000000	lapsed=12.350574
+ratelimiter=SyncMap + Load > Store	allowed(rps)=19982.472676	total(rps)=55555466.720276
+BenchmarkIsolated/Map_+_Mutex;number_of_keys:2048
+BenchmarkIsolated/Map_+_Mutex;number_of_keys:2048-10                   	62708019	       178.8 ns/op	       0 B/op	       0 allocs/op
+ratelimiter=Map + Mutex	allowed=1095560.000000	disallowed=61612459.000000	lapsed=11.215311
+ratelimiter=Map + Mutex	allowed(rps)=97684.313816	total(rps)=5591286.471542
+BenchmarkIsolated/Map_+_RWMutex;number_of_keys:2048
+BenchmarkIsolated/Map_+_RWMutex;number_of_keys:2048-10                 	82325418	       177.0 ns/op	       0 B/op	       0 allocs/op
+ratelimiter=Map + RWMutex	allowed=298491.000000	disallowed=82026927.000000	lapsed=14.569950
+ratelimiter=Map + RWMutex	allowed(rps)=20486.755449	total(rps)=5650356.981753
+BenchmarkIsolated/Redis;number_of_keys:2048
+BenchmarkIsolated/Redis;number_of_keys:2048-10                         	  608895	     24987 ns/op	     663 B/op	      21 allocs/op
+ratelimiter=Redis	allowed=608895.000000	disallowed=0.000000	lapsed=15.214345
+ratelimiter=Redis	allowed(rps)=40021.111544	total(rps)=40021.111544
+BenchmarkIsolated/Redis_With_Delay;number_of_keys:2048
+BenchmarkIsolated/Redis_With_Delay;number_of_keys:2048-10              	471809442	        27.65 ns/op	       0 B/op	       0 allocs/op
+ratelimiter=Redis With Delay	allowed=471809442.000000	disallowed=0.000000	lapsed=13.046933
+ratelimiter=Redis With Delay	allowed(rps)=36162480.028226	total(rps)=36162480.028226
+BenchmarkIsolated/SyncMap_+_LoadOrStore;number_of_keys:16384
+BenchmarkIsolated/SyncMap_+_LoadOrStore;number_of_keys:16384-10        	185776209	        55.63 ns/op	     105 B/op	       3 allocs/op
+ratelimiter=SyncMap + LoadOrStore	allowed=1410116.000000	disallowed=184366093.000000	lapsed=10.334542
+ratelimiter=SyncMap + LoadOrStore	allowed(rps)=136446.882682	total(rps)=17976240.674145
+BenchmarkIsolated/SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384
+BenchmarkIsolated/SyncMap_+_Load_>_LoadOrStore;number_of_keys:16384-10 	640364043	        17.22 ns/op	       0 B/op	       0 allocs/op
+ratelimiter=SyncMap + Load > LoadOrStore	allowed=819185.000000	disallowed=639544858.000000	lapsed=11.024498
+ratelimiter=SyncMap + Load > LoadOrStore	allowed(rps)=74305.877132	total(rps)=58085550.759672
+BenchmarkIsolated/SyncMap_+_Load_>_Store;number_of_keys:16384
+BenchmarkIsolated/SyncMap_+_Load_>_Store;number_of_keys:16384-10       	575379638	        20.99 ns/op	       0 B/op	       0 allocs/op
+ratelimiter=SyncMap + Load > Store	allowed=1596936.000000	disallowed=573782702.000000	lapsed=12.078195
+ratelimiter=SyncMap + Load > Store	allowed(rps)=132216.445053	total(rps)=47637882.978441
+BenchmarkIsolated/Map_+_Mutex;number_of_keys:16384
+BenchmarkIsolated/Map_+_Mutex;number_of_keys:16384-10                  	65723290	       180.7 ns/op	       0 B/op	       0 allocs/op
+ratelimiter=Map + Mutex	allowed=1328001.000000	disallowed=64395289.000000	lapsed=11.872972
+ratelimiter=Map + Mutex	allowed(rps)=111850.769238	total(rps)=5535538.409491
+BenchmarkIsolated/Map_+_RWMutex;number_of_keys:16384
+BenchmarkIsolated/Map_+_RWMutex;number_of_keys:16384-10                	103741705	       182.1 ns/op	       0 B/op	       0 allocs/op
+ratelimiter=Map + RWMutex	allowed=1146184.000000	disallowed=102595521.000000	lapsed=18.893583
+ratelimiter=Map + RWMutex	allowed(rps)=60665.253919	total(rps)=5490843.421122
+BenchmarkIsolated/Redis;number_of_keys:16384
+BenchmarkIsolated/Redis;number_of_keys:16384-10                        	  508497	     26009 ns/op	     802 B/op	      23 allocs/op
+ratelimiter=Redis	allowed=508497.000000	disallowed=0.000000	lapsed=13.225477
+ratelimiter=Redis	allowed(rps)=38448.291157	total(rps)=38448.291157
+BenchmarkIsolated/Redis_With_Delay;number_of_keys:16384
+BenchmarkIsolated/Redis_With_Delay;number_of_keys:16384-10             	448545828	        49.29 ns/op	       0 B/op	       0 allocs/op
+ratelimiter=Redis With Delay	allowed=448545828.000000	disallowed=0.000000	lapsed=22.108988
+ratelimiter=Redis With Delay	allowed(rps)=20287940.041761	total(rps)=20287940.041761
+PASS
+ok  	github.com/yesyoukenspace/go-ratelimit/v1/ratelimit	262.744s

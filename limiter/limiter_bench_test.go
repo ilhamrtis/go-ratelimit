@@ -11,16 +11,19 @@ import (
 func BenchmarkLimiter(b *testing.B) {
 	r := (100.0 / 60)
 	burst := 100
-	limiters := map[string]Limiter{
-		"Bucket":            NewBucket(r, burst),
-		"DefaultLimiter":    NewDefaultLimiter(r, burst),
-		"ResetBasedLimiter": NewResetbasedLimiter(r, burst),
+	limiters := []struct {
+		name    string
+		limiter Limiter
+	}{
+		{name: "Bucket", limiter: NewBucket(r, burst)},
+		{name: "DefaultLimiter", limiter: NewDefaultLimiter(r, burst)},
+		{name: "ResetBasedLimiter", limiter: NewResetbasedLimiter(r, burst)},
 	}
 
 	for _, numberOfProcs := range []int{2, 4, 8} {
 		runtime.GOMAXPROCS(numberOfProcs)
-		for name, limiter := range limiters {
-			limiterRunner(b, name, numberOfProcs, limiter)
+		for _, limiter := range limiters {
+			limiterRunner(b, limiter.name, numberOfProcs, limiter.limiter)
 		}
 	}
 }

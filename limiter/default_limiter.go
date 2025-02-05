@@ -23,3 +23,7 @@ func (d *DefaultLimiter) AllowN(n int) (bool, error) {
 func (d *DefaultLimiter) Allow() (bool, error) {
 	return d.Limiter.Allow(), nil
 }
+
+func (d *DefaultLimiter) ForceN(n int) (bool, error) {
+	return d.Limiter.ReserveN(time.Now(), n).OK(), nil
+}
