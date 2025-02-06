@@ -56,11 +56,11 @@ func TestLimiterAllow(t *testing.T) {
 			tolerance:       0.001,
 		},
 		{
-			reqPerSec:       100,
-			burst:           200,
+			reqPerSec:       1000,
+			burst:           2000,
 			runFor:          3 * time.Second,
-			expectedAllowed: 500,
-			tolerance:       0.001,
+			expectedAllowed: 5000,
+			tolerance:       0.0001,
 		},
 	}
 
@@ -91,6 +91,9 @@ func TestLimiterAllow(t *testing.T) {
 				}
 				if allowed+denied < int(tt.reqPerSec)*int(tt.runFor.Seconds()) {
 					t.Errorf("expected >%d runs, got %d", int(tt.reqPerSec)*int(tt.runFor.Seconds()), allowed+denied)
+				}
+				if denied < 1 {
+					t.Errorf("expected >%d denials, got %d", 1, denied)
 				}
 			})
 		}

@@ -24,7 +24,7 @@ func NewResetbasedLimiter(tps float64, burst int) *ResetBasedLimiter {
 		tokenPerNano:   tpns,
 		burst:          burst,
 		burstInNano:    burstInNano,
-		resetAt:        float64(time.Now().UnixMilli()) - burstInNano,
+		resetAt:        float64(time.Now().UnixNano()) - burstInNano,
 	}
 }
 
@@ -58,17 +58,17 @@ func (l *ResetBasedLimiter) ForceN(n int) (bool, error) {
 	return l.allowN(n, false)
 }
 
-func (l *ResetBasedLimiter) IncrementResetAtBy(ms float64) {
+func (l *ResetBasedLimiter) IncrementResetAtBy(inc float64) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.resetAt += ms
+	l.resetAt += inc
 }
 
 func (l *ResetBasedLimiter) GetResetAt() float64 {
 	return l.resetAt
 }
 
-func (l *ResetBasedLimiter) PopDeltaSinceInMs() float64 {
+func (l *ResetBasedLimiter) PopResetAtDelta() float64 {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	deltaSince := l.deltaSince

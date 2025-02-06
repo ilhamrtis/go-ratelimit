@@ -4,31 +4,31 @@ pkg: github.com/yesyoukenspace/go-ratelimit/limiter
 cpu: Apple M1 Pro
 BenchmarkLimiter
 BenchmarkLimiter/Bucket/goroutines=1
-BenchmarkLimiter/Bucket/goroutines=1-10         	70956216	       167.5 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLimiter/Bucket/custom_metrics	allowed=11756541.000000	disallowed=59199675.000000	lapsed=11.887786	allowed(rps)=988959.662871	total(rps)=5968833.473550
+BenchmarkLimiter/Bucket/goroutines=1-10         	48623367	       244.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/Bucket/custom_metrics	allowed=11689469.000000	disallowed=36933898.000000	lapsed=11.889205	allowed(rps)=983200.229250	total(rps)=4089707.204094
 BenchmarkLimiter/DefaultLimiter/goroutines=1
-BenchmarkLimiter/DefaultLimiter/goroutines=1-10 	59938449	       200.3 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLimiter/DefaultLimiter/custom_metrics	allowed=12536532.000000	disallowed=47401917.000000	lapsed=12.007658	allowed(rps)=1044044.707372	total(rps)=4991685.136413
+BenchmarkLimiter/DefaultLimiter/goroutines=1-10 	46357939	       257.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/DefaultLimiter/custom_metrics	allowed=12761940.000000	disallowed=33595999.000000	lapsed=11.946802	allowed(rps)=1068230.607199	total(rps)=3880363.747712
 BenchmarkLimiter/ResetBasedLimiter/goroutines=1
-BenchmarkLimiter/ResetBasedLimiter/goroutines=1-10         	80905034	       149.8 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLimiter/ResetBasedLimiter/custom_metrics	allowed=11528332.000000	disallowed=69376702.000000	lapsed=12.122118	allowed(rps)=951016.335409	total(rps)=6674166.648810
+BenchmarkLimiter/ResetBasedLimiter/goroutines=1-10         	66934450	       181.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/ResetBasedLimiter/custom_metrics	allowed=11684904.000000	disallowed=55249546.000000	lapsed=12.125872	allowed(rps)=963634.130432	total(rps)=5519970.084625
 BenchmarkLimiter/Bucket/goroutines=8
-BenchmarkLimiter/Bucket/goroutines=8-10                    	72052543	       165.7 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLimiter/Bucket/custom_metrics	allowed=11817502.000000	disallowed=60235041.000000	lapsed=11.939153	allowed(rps)=989810.771958	total(rps)=6034979.575917
+BenchmarkLimiter/Bucket/goroutines=8-10                    	45112746	       268.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/Bucket/custom_metrics	allowed=11823618.000000	disallowed=33289128.000000	lapsed=12.106329	allowed(rps)=976647.679250	total(rps)=3726377.043429
 BenchmarkLimiter/DefaultLimiter/goroutines=8
-BenchmarkLimiter/DefaultLimiter/goroutines=8-10            	54369145	       220.7 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLimiter/DefaultLimiter/custom_metrics	allowed=12890502.000000	disallowed=41478643.000000	lapsed=11.998297	allowed(rps)=1074360.939910	total(rps)=4531405.039485
+BenchmarkLimiter/DefaultLimiter/goroutines=8-10            	44987445	       265.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/DefaultLimiter/custom_metrics	allowed=13070651.000000	disallowed=31916794.000000	lapsed=11.927188	allowed(rps)=1095870.296077	total(rps)=3771840.030915
 BenchmarkLimiter/ResetBasedLimiter/goroutines=8
-BenchmarkLimiter/ResetBasedLimiter/goroutines=8-10         	81428227	       147.6 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLimiter/ResetBasedLimiter/custom_metrics	allowed=11652336.000000	disallowed=69775891.000000	lapsed=12.015636	allowed(rps)=969764.400380	total(rps)=6776855.364512
+BenchmarkLimiter/ResetBasedLimiter/goroutines=8-10         	68084832	       179.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/ResetBasedLimiter/custom_metrics	allowed=11727356.000000	disallowed=56357476.000000	lapsed=12.192990	allowed(rps)=961811.342405	total(rps)=5583932.445074
 BenchmarkLimiter/Bucket/goroutines=32
-BenchmarkLimiter/Bucket/goroutines=32-10                   	72329332	       166.1 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLimiter/Bucket/custom_metrics	allowed=11913663.000000	disallowed=60415669.000000	lapsed=12.011355	allowed(rps)=991866.699524	total(rps)=6021746.276494
+BenchmarkLimiter/Bucket/goroutines=32-10                   	43465707	       272.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/Bucket/custom_metrics	allowed=11501532.000000	disallowed=31964175.000000	lapsed=11.856439	allowed(rps)=970066.273312	total(rps)=3666000.008205
 BenchmarkLimiter/DefaultLimiter/goroutines=32
-BenchmarkLimiter/DefaultLimiter/goroutines=32-10           	53928453	       222.4 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLimiter/DefaultLimiter/custom_metrics	allowed=12892269.000000	disallowed=41036184.000000	lapsed=11.994535	allowed(rps)=1074845.259880	total(rps)=4496085.373312
+BenchmarkLimiter/DefaultLimiter/goroutines=32-10           	44935412	       269.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/DefaultLimiter/custom_metrics	allowed=13183777.000000	disallowed=31751635.000000	lapsed=12.099418	allowed(rps)=1089620.764530	total(rps)=3713849.072076
 BenchmarkLimiter/ResetBasedLimiter/goroutines=32
-BenchmarkLimiter/ResetBasedLimiter/goroutines=32-10        	82088935	       146.8 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLimiter/ResetBasedLimiter/custom_metrics	allowed=11680759.000000	disallowed=70408176.000000	lapsed=12.050344	allowed(rps)=969329.941314	total(rps)=6812165.420592
+BenchmarkLimiter/ResetBasedLimiter/goroutines=32-10        	67276892	       179.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLimiter/ResetBasedLimiter/custom_metrics	allowed=11591625.000000	disallowed=55685267.000000	lapsed=12.064440	allowed(rps)=960809.241046	total(rps)=5576462.277074
 PASS
-ok  	github.com/yesyoukenspace/go-ratelimit/limiter	109.856s
+ok  	github.com/yesyoukenspace/go-ratelimit/limiter	111.129s

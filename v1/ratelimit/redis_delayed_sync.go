@@ -45,7 +45,7 @@ func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *Redis
 		rdb:          opt.RedisClient,
 		syncInterval: opt.SyncInterval,
 		inner:        NewSyncMapLoadThenStore(limiter.NewResetbasedLimiter, opt.TokenPerSec, opt.Burst),
-		toSync:       []sync.Map{{}, {}},
+		toSync:       make([]sync.Map, 2),
 		lastSynced:   map[string]int64{},
 		opt:          opt,
 		burstInMs:    float64(opt.Burst) / opt.TokenPerSec * 1000,
@@ -82,6 +82,7 @@ func (r *RedisDelayedSync) AllowN(key string, n int) (bool, error) {
 	return ok, err
 }
 
+// Note: This function is not thread safe
 func (r *RedisDelayedSync) syncAll(index int32) error {
 	r.toSync[index].Range(func(key, value any) bool {
 		if err := r.sync(key.(string)); err != nil {
@@ -89,31 +90,47 @@ func (r *RedisDelayedSync) syncAll(index int32) error {
 		}
 		return true
 	})
+	// Assumption: clear finishes before r.currentIndex rotates back to the index that is being cleared
+	// If the assumption is not true, the key will be synced again in the next sync interval if the key is used again
+	// We can avoid this, by:
+	// A: if the syncInterval is large enough to ensure that the clear finishes before the next sync
+	// B: if the array of sync.Map is large enough to ensure that the clear finishes before a full rotation is made
 	go r.toSync[index].Clear()
 	return nil
 }
 
+// Note: This function is not thread safe
 func (r *RedisDelayedSync) sync(key string) error {
 	limiter := r.inner.GetLimiter(key)
-	incrementInMs := limiter.PopDeltaSinceInMs()
+	delta := limiter.PopResetAtDelta()
+	// If the key is not synced yet, this could be the first time the key is used across the entire distributed environment
+	// We need to set the key in the redis
 	if r.lastSynced[key] == 0 {
 		resetAt := limiter.GetResetAt()
+		// TODO: fix arbitrary 48 hours expiry
 		cmd := r.rdb.SetNX(r.ctx, key, int64(resetAt), time.Hour*48)
 		if cmd.Err() != nil {
 			return cmd.Err()
 		}
+		// We assume that this server is the first server to set the key in the redis
+		// There is no need to check the result of the SetNX command, as it does not matter if the key is set by another server or not,
+		// as long as the key is set, the next sync will be able to calculate the correct delta, and the key will be in sync
+		// there is also no need to set the lastSynced value to the value in the redis, even if the key is set by another server,
+		// because we will later calculate the difference between the value in redis with the local resetAt value
 		r.lastSynced[key] = int64(resetAt)
 	}
-	cmd := r.rdb.IncrBy(r.ctx, key, int64(incrementInMs))
+	cmd := r.rdb.IncrBy(r.ctx, key, int64(delta))
 	if cmd.Err() != nil {
 		return cmd.Err()
 	}
-
-	sharedResetAt := float64(cmd.Val())
-	diff := sharedResetAt - float64(r.lastSynced[key]) - incrementInMs
+	// if lastSynced value was previously set to the local resetAt value
+	// diff==0: if the key is not set by another server
+	// diff>0: if the key is set by another server and the current server joined the cluster later -
+	// this is the case where the clock drift could be an issue if the key is set by another server, the clock drift will affect calculation of the diff
+	diff := float64(cmd.Val()-r.lastSynced[key]) - delta
 	if diff > 0 {
-		limiter.IncrementResetAtBy(float64(diff))
+		limiter.IncrementResetAtBy(diff)
 	}
-	r.lastSynced[key] = int64(sharedResetAt)
+	r.lastSynced[key] = cmd.Val()
 	return nil
 }

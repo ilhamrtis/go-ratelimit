@@ -7,15 +7,14 @@
 This project is in BETA. Contributions and suggestions are welcome.
 
 ## Features
-- A low impact rate limiter backed by redis made for distributed systems that requires low latency but allow some inaccuracy in enforcing rate limit - [ code](./v1/ratelimit/redis_delayed_sync.go)
-- 
+- A low impact rate limiter backed by redis made for distributed systems that requires low latency but allow some inaccuracy in enforcing rate limit - [code](./v1/ratelimit/redis_delayed_sync.go)
 
 ## Installation
 
 To install the library, use `go get`:
 
 ```bash
-go get -u github.com/yesyoukenspace/ratelimit
+go get -u github.com/yesyoukenspace/go-ratelimit
 ```
 
 ## Usage

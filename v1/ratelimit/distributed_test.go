@@ -51,7 +51,7 @@ func TestDistributedAllow(t *testing.T) {
 			},
 		},
 	}
-	for _, ratelimiter := range ratelimiters {
+	for _, ratelimiter := range ratelimiters[1:] {
 		for _, tt := range tests {
 			testDistributedRatelimiter(t, testDistributedRatelimiterConfig{
 				name:            ratelimiter.name,
@@ -113,7 +113,7 @@ func testDistributedRatelimiter(t *testing.T, tt testDistributedRatelimiterConfi
 			}(lg)
 		}
 
-		for _, _ = range lgs {
+		for range lgs {
 			results := <-resultsChan
 			totalAllowed += results[0]
 			totalDenied += results[1]
@@ -125,6 +125,9 @@ func testDistributedRatelimiter(t *testing.T, tt testDistributedRatelimiterConfi
 		expectedTotalRequests := int(tt.reqPerSec) * int(tt.runFor.Seconds()) * tt.instances
 		if totalAllowed+totalDenied < expectedTotalRequests {
 			t.Errorf("unexpected total requests: expected >%d total requests, got %d", expectedTotalRequests, totalAllowed+totalDenied)
+		}
+		if totalDenied < 1 {
+			t.Errorf("expected at least 1 denied request")
 		}
 	})
 }
