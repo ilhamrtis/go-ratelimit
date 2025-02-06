@@ -40,10 +40,10 @@ func BenchmarkIsolated(b *testing.B) {
 		{name: "Map + RWMutex", limiter: NewRWMutex(nil, rate, burst)},
 		{name: "Redis", limiter: NewGoRedis(newRDB(), rate, burst)},
 		{name: "Redis With Delay", limiter: NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
-			RedisClient:   newRDB(),
-			RequestPerSec: rate,
-			Burst:         burst,
-			SyncInterval:  time.Second / 2,
+			RedisClient:  newRDB(),
+			TokenPerSec:  rate,
+			Burst:        burst,
+			SyncInterval: time.Second / 2,
 		})},
 	}
 	concurrentUsers := 32768

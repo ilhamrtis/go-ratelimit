@@ -7,8 +7,8 @@
 This project is in BETA. Contributions and suggestions are welcome.
 
 ## Features
-
-- A low impact distributed rate limiter [./v1/ratelimit/redis_delayed_sync.go]
+- A low impact rate limiter backed by redis made for distributed systems that requires low latency but allow some inaccuracy in enforcing rate limit - [ code](./v1/ratelimit/redis_delayed_sync.go)
+- 
 
 ## Installation
 

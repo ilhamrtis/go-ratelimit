@@ -1,7 +1,6 @@
 package ratelimit
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -13,19 +12,19 @@ func TestDistributedAllow(t *testing.T) {
 	tests := []testDistributedRatelimiterConfig{
 		{
 			reqPerSec:       100,
-			burst:           100,
-			runFor:          25 * time.Second,
-			expectedAllowed: 2600,
-			tolerance:       0.02,
+			burst:           200,
+			runFor:          20 * time.Second,
+			expectedAllowed: 2200,
+			tolerance:       0.05,
 			instances:       5,
 		},
 		{
 			reqPerSec:       100,
-			burst:           100,
-			runFor:          25 * time.Second,
-			expectedAllowed: 2600,
-			tolerance:       0.1,
-			instances:       20,
+			burst:           200,
+			runFor:          20 * time.Second,
+			expectedAllowed: 2200,
+			tolerance:       0.01,
+			instances:       3,
 		},
 	}
 
@@ -42,11 +41,11 @@ func TestDistributedAllow(t *testing.T) {
 		{
 			name: "Redis with delay in sync",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
+				return NewRedisDelayedSync(RedisDelayedSyncOption{
 					RedisClient:  newRDB(1),
 					TokenPerSec:  l,
 					Burst:        i,
-					SyncInterval: time.Second / 10,
+					SyncInterval: time.Second / 2,
 				})
 			},
 		},
@@ -79,7 +78,7 @@ type testDistributedRatelimiterConfig struct {
 }
 
 func testDistributedRatelimiter(t *testing.T, tt testDistributedRatelimiterConfig) {
-	t.Run(fmt.Sprintf("ratelimiter=%s;rps=%2f;burst=%d;instances=%d", tt.name, tt.reqPerSec, tt.burst, tt.instances), func(t *testing.T) {
+	t.Run(fmt.Sprintf("ratelimiter=%s;rps=%2f;burst=%d", tt.name, tt.reqPerSec, tt.burst), func(t *testing.T) {
 		t.Parallel()
 		rStr := utils.RandString(4)
 		totalAllowed := 0

@@ -1,7 +1,6 @@
 package ratelimit
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -9,7 +8,7 @@ import (
 	"github.com/yesyoukenspace/go-ratelimit/internal/utils"
 )
 
-func TestIsolatedAllow(t *testing.T) {
+func TestAllow(t *testing.T) {
 	tests := []testRatelimiterConfig{
 		{
 			reqPerSec:       100,
@@ -34,7 +33,7 @@ func TestIsolatedAllow(t *testing.T) {
 		{
 			name: "SyncMap + Load > LoadOrStore",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewSyncMapLoadThenLoadOrStore(nil, l, i)
+				return NewSyncMapLoadThenLoadOrStore(NewDefaultLimiter, l, i)
 			},
 		},
 		{
@@ -46,19 +45,19 @@ func TestIsolatedAllow(t *testing.T) {
 		{
 			name: "SyncMap + LoadOrStore",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewSyncMapLoadOrStore(nil, l, i)
+				return NewSyncMapLoadOrStore(NewDefaultLimiter, l, i)
 			},
 		},
 		{
 			name: "Map + Mutex",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewMutex(nil, l, i)
+				return NewMutex(NewDefaultLimiter, l, i)
 			},
 		},
 		{
 			name: "Map + RWMutex",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewRWMutex(nil, l, i)
+				return NewRWMutex(NewDefaultLimiter, l, i)
 			},
 		},
 		{
@@ -70,7 +69,7 @@ func TestIsolatedAllow(t *testing.T) {
 		{
 			name: "Redis with delay in sync",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
+				return NewRedisDelayedSync(RedisDelayedSyncOption{
 					RedisClient:  newRDB(),
 					TokenPerSec:  l,
 					Burst:        i,

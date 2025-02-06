@@ -25,11 +25,12 @@ type RedisDelayedSync struct {
 }
 
 type RedisDelayedSyncOption struct {
-	SyncInterval  time.Duration
-	RequestPerSec float64
-	Burst         int
-
-	RedisClient *redis.Client
+	// SyncInterval is the interval to sync the rate limit to the redis
+	// Adjust this value to trade off between the performance and the accuracy of the rate limit
+	SyncInterval time.Duration
+	TokenPerSec  float64
+	Burst        int
+	RedisClient  *redis.Client
 }
 
 func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *RedisDelayedSync {
@@ -43,11 +44,11 @@ func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *Redis
 		cancel:       cancel,
 		rdb:          opt.RedisClient,
 		syncInterval: opt.SyncInterval,
-		inner:        NewSyncMapLoadThenStore(limiter.NewResetbasedLimiter, opt.RequestPerSec, opt.Burst),
+		inner:        NewSyncMapLoadThenStore(limiter.NewResetbasedLimiter, opt.TokenPerSec, opt.Burst),
 		toSync:       []sync.Map{{}, {}},
 		lastSynced:   map[string]int64{},
 		opt:          opt,
-		burstInMs:    float64(opt.Burst) / opt.RequestPerSec * 1000,
+		burstInMs:    float64(opt.Burst) / opt.TokenPerSec * 1000,
 	}
 	go func() {
 		ticker := time.NewTicker(opt.SyncInterval)
