@@ -1,0 +1,19 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/yesyoukenspace/go-ratelimit/v1/ratelimit
+cpu: Apple M1 Pro
+BenchmarkDistributed
+BenchmarkDistributed/Redis
+BenchmarkDistributed/Redis-10         	  584349	     20831 ns/op	     690 B/op	      24 allocs/op
+BenchmarkDistributed/Redis/custom_metrics	allowed=584347.000000	disallowed=2.000000	lapsed=12.172533	allowed(rps)=48005.373412	total(rps)=48005.537716
+BenchmarkDistributed/Redis_with_delay_in_sync
+BenchmarkDistributed/Redis_with_delay_in_sync-10         	456788215	        32.51 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDistributed/Redis_with_delay_in_sync/custom_metrics	allowed=25587973.000000	disallowed=431200242.000000	lapsed=14.848829	allowed(rps)=1723231.657578	total(rps)=30762573.998983
+BenchmarkDistributed/Redis#01
+BenchmarkDistributed/Redis#01-10                         	  525970	     20693 ns/op	     801 B/op	      27 allocs/op
+BenchmarkDistributed/Redis/custom_metrics	allowed=525956.000000	disallowed=14.000000	lapsed=10.883921	allowed(rps)=48324.128595	total(rps)=48325.414896
+BenchmarkDistributed/Redis_with_delay_in_sync#01
+BenchmarkDistributed/Redis_with_delay_in_sync#01-10      	465712462	        22.94 ns/op	       3 B/op	       0 allocs/op
+BenchmarkDistributed/Redis_with_delay_in_sync/custom_metrics	allowed=100425179.000000	disallowed=365287283.000000	lapsed=10.683778	allowed(rps)=9399781.849166	total(rps)=43590617.321558
+PASS
+ok  	github.com/yesyoukenspace/go-ratelimit/v1/ratelimit	73.450s

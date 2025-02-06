@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"math"
+	"math/big"
 )
 
 func IsCloseEnough(a, b, tolerance float64) bool {
@@ -33,6 +34,13 @@ func RandString(bytes int) string {
 	return base64.StdEncoding.EncodeToString(token)
 }
 
+func RandInt(min, max int64) int64 {
+	if val, err := rand.Int(rand.Reader, big.NewInt(max-min)); err == nil {
+		return min + val.Int64()
+	} else {
+		panic(err)
+	}
+}
 func ExpectedAllowedRequests(burst float64, reqPerSec float64, seconds float64) int {
 	return int(reqPerSec*seconds) + int(burst)
 }

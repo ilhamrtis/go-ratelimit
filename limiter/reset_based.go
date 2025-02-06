@@ -7,24 +7,24 @@ import (
 )
 
 type ResetBasedLimiter struct {
-	resetAt    float64
-	B          int
-	Rps        float64
-	Rpms       float64
-	mu         sync.Mutex
-	burstInMs  float64
-	deltaSince float64
+	resetAt        float64
+	burst          int
+	tokenPerSecond float64
+	tokenPerNano   float64
+	mu             sync.Mutex
+	burstInNano    float64
+	deltaSince     float64
 }
 
-func NewResetbasedLimiter(reqPerSec float64, burst int) *ResetBasedLimiter {
-	rpms := reqPerSec / 1000
-	burstInMs := float64(burst) / rpms
+func NewResetbasedLimiter(tps float64, burst int) *ResetBasedLimiter {
+	tpns := tps / float64(time.Second/time.Nanosecond)
+	burstInNano := float64(burst) / tpns
 	return &ResetBasedLimiter{
-		Rps:       reqPerSec,
-		Rpms:      rpms,
-		B:         burst,
-		burstInMs: burstInMs,
-		resetAt:   float64(time.Now().UnixMilli()) - burstInMs,
+		tokenPerSecond: tps,
+		tokenPerNano:   tpns,
+		burst:          burst,
+		burstInNano:    burstInNano,
+		resetAt:        float64(time.Now().UnixMilli()) - burstInNano,
 	}
 }
 
@@ -33,20 +33,20 @@ func (l *ResetBasedLimiter) Allow() (bool, error) {
 }
 
 func (l *ResetBasedLimiter) allowN(n int, shouldCheck bool) (bool, error) {
-	now := float64(time.Now().UnixMilli())
-	if (shouldCheck && l.resetAt > now) || n > l.B {
+	now := float64(time.Now().UnixNano())
+	if (shouldCheck && l.resetAt > now) || n > l.burst {
 		return false, nil
 	}
 
-	incrementInMs := float64(n) / l.Rpms
+	incrementInNano := float64(n) / l.tokenPerNano
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	newResetAt := math.Max(l.resetAt, now-l.burstInMs) + incrementInMs
+	newResetAt := math.Max(l.resetAt, now-l.burstInNano) + incrementInNano
 	if shouldCheck && newResetAt > now {
 		return false, nil
 	}
 	l.resetAt = newResetAt
-	l.deltaSince += incrementInMs
+	l.deltaSince += incrementInNano
 	return true, nil
 }
 

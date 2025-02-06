@@ -40,7 +40,7 @@ func TestIsolatedAllow(t *testing.T) {
 		{
 			name: "SyncMap + Load > Store",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewSyncMapLoadThenStore(nil, l, i)
+				return NewSyncMapLoadThenStore(NewDefaultLimiter, l, i)
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func TestIsolatedAllow(t *testing.T) {
 		{
 			name: "Redis with delay in sync",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewRedisWithDelay(context.Background(), RedisWithDelayOption{
+				return NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
 					RedisClient:   newRDB(),
 					RequestPerSec: l,
 					Burst:         i,

@@ -2,15 +2,15 @@ package limiter
 
 import (
 	"fmt"
-	"runtime"
-	"sync"
+	"math"
+	"sync/atomic"
 
 	"testing"
 )
 
 func BenchmarkLimiter(b *testing.B) {
-	r := (100.0 / 60)
-	burst := 100
+	r := math.Pow10(6)
+	burst := int(math.Pow10(1))
 	limiters := []struct {
 		name    string
 		limiter Limiter
@@ -20,53 +20,40 @@ func BenchmarkLimiter(b *testing.B) {
 		{name: "ResetBasedLimiter", limiter: NewResetbasedLimiter(r, burst)},
 	}
 
-	for _, numberOfProcs := range []int{2, 4, 8} {
-		runtime.GOMAXPROCS(numberOfProcs)
+	for _, numberOfGoroutines := range []int{1, 8, 32} {
 		for _, limiter := range limiters {
-			limiterRunner(b, limiter.name, numberOfProcs, limiter.limiter)
+			limiterRunner(b, limiter.name, numberOfGoroutines, limiter.limiter)
 		}
 	}
 }
 
-func limiterRunner(b *testing.B, name string, numberOfProcs int, limiter Limiter) bool {
-	return b.Run(fmt.Sprintf("name:%s;number of procs:%d", name, numberOfProcs), func(b *testing.B) {
+func limiterRunner(b *testing.B, name string, numberOfGoroutines int, limiter Limiter) bool {
+	maxLapsed, maxAllowed, maxDisallowed := 0.0, 0.0, 0.0
+	runResult := b.Run(fmt.Sprintf("%s/goroutines=%d", name, numberOfGoroutines), func(b *testing.B) {
 		b.ReportAllocs()
-
-		n := b.N
-		batchSize := n / numberOfProcs
-		var wg sync.WaitGroup
-		if batchSize == 0 {
-			batchSize = n
-		}
-		key := 0
-		mu := sync.RWMutex{}
-		mu.Lock()
-		allowed := 0
-		disallowed := 0
-
-		for n > 0 {
-			wg.Add(1)
-			batch := min(n, batchSize)
-			n -= batch
-			go func(quota int) {
-				mu.RLock()
-				defer mu.RUnlock()
-				for i := 0; i < quota; i++ {
-					if ok, _ := limiter.Allow(); ok {
-						allowed++
-					} else {
-						disallowed++
-					}
+		b.SetParallelism(numberOfGoroutines)
+		allowed := atomic.Int64{}
+		disallowed := atomic.Int64{}
+		b.RunParallel(func(pb *testing.PB) {
+			a, d := int64(0), int64(0)
+			for pb.Next() {
+				if ok, _ := limiter.Allow(); ok {
+					a++
+				} else {
+					d++
 				}
-				wg.Done()
-			}(batch)
-			key++
+			}
+			allowed.Add(a)
+			disallowed.Add(d)
+		})
+
+		lapsed := b.Elapsed().Seconds()
+		if lapsed > maxLapsed {
+			maxLapsed = lapsed
+			maxAllowed = float64(allowed.Load())
+			maxDisallowed = float64(disallowed.Load())
 		}
-		b.StartTimer()
-		mu.Unlock()
-		wg.Wait()
-		b.StopTimer()
-		runtime.KeepAlive(allowed)
-		runtime.KeepAlive(disallowed)
 	})
+	fmt.Printf("%s/custom_metrics\tallowed=%f\tdisallowed=%f\tlapsed=%f\tallowed(rps)=%f\ttotal(rps)=%f\n", b.Name()+"/"+name, maxAllowed, maxDisallowed, maxLapsed, maxAllowed/maxLapsed, (maxAllowed+maxDisallowed)/maxLapsed)
+	return runResult
 }

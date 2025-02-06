@@ -4,63 +4,27 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/yesyoukenspace/go-ratelimit/limiter"
 )
 
-type rl1[l limiter.Limiter] struct {
-	m     sync.Map
-	rps   float64
-	burst int
-}
-
-func NewRl1[L limiter.Limiter](rps float64, burst int) *rl1[L] {
-	return &rl1[L]{
-		rps:   rps,
-		burst: burst,
-		m:     sync.Map{},
-	}
-}
-
-func (r *rl1[L]) AllowN(key string, n int) (bool, error) {
-	l, ok := r.m.Load(key)
-	if !ok {
-		l = limiter.NewResetbasedLimiter(r.rps, r.burst)
-		r.m.Store(key, l)
-
-	}
-	return l.(L).AllowN(n)
-}
-
-func (r *rl1[L]) GetLimiter(key string) L {
-	l, ok := r.m.Load(key)
-	if !ok {
-		l = limiter.NewResetbasedLimiter(r.rps, r.burst)
-		r.m.Store(key, l)
-	}
-	return l.(L)
-}
-
-func (r *rl1[l]) Allow(key string) (bool, error) {
-	return r.AllowN(key, 1)
-}
-
-type RedisWithDelay struct {
+type RedisDelayedSync struct {
 	syncInterval time.Duration
 	ctx          context.Context
 	cancel       context.CancelFunc
-	inner        *rl1[*limiter.ResetBasedLimiter]
+	inner        *SyncMapLoadThenStore[*limiter.ResetBasedLimiter]
 	rdb          *redis.Client
-	currentIndex int
-	toSync       []map[string]struct{}
+	currentIndex atomic.Int32
+	toSync       []sync.Map
 	lastSynced   map[string]int64
-	opt          RedisWithDelayOption
+	opt          RedisDelayedSyncOption
 	burstInMs    float64
 }
 
-type RedisWithDelayOption struct {
+type RedisDelayedSyncOption struct {
 	SyncInterval  time.Duration
 	RequestPerSec float64
 	Burst         int
@@ -68,19 +32,19 @@ type RedisWithDelayOption struct {
 	RedisClient *redis.Client
 }
 
-func NewRedisWithDelay(ctx context.Context, opt RedisWithDelayOption) *RedisWithDelay {
+func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *RedisDelayedSync {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	ctx, cancel := context.WithCancel(ctx)
 
-	rl := &RedisWithDelay{
+	rl := &RedisDelayedSync{
 		ctx:          ctx,
 		cancel:       cancel,
 		rdb:          opt.RedisClient,
 		syncInterval: opt.SyncInterval,
-		inner:        NewRl1[*limiter.ResetBasedLimiter](opt.RequestPerSec, opt.Burst),
-		toSync:       []map[string]struct{}{{}, {}},
+		inner:        NewSyncMapLoadThenStore(limiter.NewResetbasedLimiter, opt.RequestPerSec, opt.Burst),
+		toSync:       []sync.Map{{}, {}},
 		lastSynced:   map[string]int64{},
 		opt:          opt,
 		burstInMs:    float64(opt.Burst) / opt.RequestPerSec * 1000,
@@ -93,10 +57,8 @@ func NewRedisWithDelay(ctx context.Context, opt RedisWithDelayOption) *RedisWith
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				indexToSync := rl.currentIndex
-				nextIndex := (rl.currentIndex + 1) % len(rl.toSync)
-				rl.toSync[nextIndex] = map[string]struct{}{}
-				rl.currentIndex = nextIndex
+				indexToSync := rl.currentIndex.Load()
+				rl.currentIndex.Store((indexToSync + 1) % int32(len(rl.toSync)))
 				if err := rl.syncAll(indexToSync); err != nil {
 					// TODO: handle error
 					fmt.Printf("error syncing: %v\n", err)
@@ -107,28 +69,30 @@ func NewRedisWithDelay(ctx context.Context, opt RedisWithDelayOption) *RedisWith
 	return rl
 }
 
-func (r *RedisWithDelay) Allow(key string) (bool, error) {
+func (r *RedisDelayedSync) Allow(key string) (bool, error) {
 	return r.AllowN(key, 1)
 }
 
-func (r *RedisWithDelay) AllowN(key string, n int) (bool, error) {
+func (r *RedisDelayedSync) AllowN(key string, n int) (bool, error) {
 	ok, err := r.inner.AllowN(key, n)
 	if ok {
-		r.toSync[r.currentIndex][key] = struct{}{}
+		r.toSync[r.currentIndex.Load()].LoadOrStore(key, struct{}{})
 	}
 	return ok, err
 }
 
-func (r *RedisWithDelay) syncAll(index int) error {
-	for key, _ := range r.toSync[index] {
-		if err := r.sync(key); err != nil {
-			return err
+func (r *RedisDelayedSync) syncAll(index int32) error {
+	r.toSync[index].Range(func(key, value any) bool {
+		if err := r.sync(key.(string)); err != nil {
+			return false
 		}
-	}
+		return true
+	})
+	go r.toSync[index].Clear()
 	return nil
 }
 
-func (r *RedisWithDelay) sync(key string) error {
+func (r *RedisDelayedSync) sync(key string) error {
 	limiter := r.inner.GetLimiter(key)
 	incrementInMs := limiter.PopDeltaSinceInMs()
 	if r.lastSynced[key] == 0 {

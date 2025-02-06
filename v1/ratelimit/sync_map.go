@@ -85,44 +85,41 @@ func (d *SyncMapLoadOrStore) Allow(key string) (bool, error) {
 
 var _ Ratelimiter = &SyncMapLoadOrStore{}
 
-type SyncMapLoadThenStore struct {
-	m sync.Map
-	R float64
-	B int
-	c NewLimiterFn
+type SyncMapLoadThenStore[L limiter.Limiter] struct {
+	m     sync.Map
+	tps   float64
+	burst int
+	c     func(float64, int) L
 }
 
-func NewSyncMapLoadThenStore(constructor NewLimiterFn, reqPerSec float64, burst int) *SyncMapLoadThenStore {
-	if constructor == nil {
-		constructor = NewDefaultLimiter
-	}
-	return &SyncMapLoadThenStore{
-		c: constructor,
-		R: reqPerSec,
-		B: burst,
+func NewSyncMapLoadThenStore[L limiter.Limiter](constructor func(float64, int) L, rps float64, burst int) *SyncMapLoadThenStore[L] {
+	return &SyncMapLoadThenStore[L]{
+		tps:   rps,
+		burst: burst,
+		m:     sync.Map{},
+		c:     constructor,
 	}
 }
 
-func (d *SyncMapLoadThenStore) AllowN(key string, n int) (bool, error) {
-	l, ok := d.m.Load(key)
+func (r *SyncMapLoadThenStore[L]) AllowN(key string, n int) (bool, error) {
+	l, ok := r.m.Load(key)
 	if !ok {
-		l = d.c(d.R, d.B)
+		l = r.c(r.tps, r.burst)
 		// note: We might overwrite the limiter if multiple goroutines are trying to create the limiter at the same time, it is not a big deal as we may just have a little inaccurate rate limiting for a short period of time
-		d.m.Store(key, l)
+		r.m.Store(key, l)
 	}
-	return l.(limiter.Limiter).AllowN(n)
+	return l.(L).AllowN(n)
 }
 
-func (d *SyncMapLoadThenStore) ForceN(key string, n int) (bool, error) {
-	l, ok := d.m.Load(key)
+func (r *SyncMapLoadThenStore[L]) GetLimiter(key string) L {
+	l, ok := r.m.Load(key)
 	if !ok {
-		l = d.c(d.R, d.B)
-		// note: We might overwrite the limiter if multiple goroutines are trying to create the limiter at the same time, it is not a big deal as we may just have a little inaccurate rate limiting for a short period of time
-		d.m.Store(key, l)
+		l = limiter.NewResetbasedLimiter(r.tps, r.burst)
+		r.m.Store(key, l)
 	}
-	return l.(limiter.Limiter).ForceN(n)
+	return l.(L)
 }
 
-func (d *SyncMapLoadThenStore) Allow(key string) (bool, error) {
-	return d.AllowN(key, 1)
+func (r *SyncMapLoadThenStore[l]) Allow(key string) (bool, error) {
+	return r.AllowN(key, 1)
 }

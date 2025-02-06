@@ -8,6 +8,8 @@ This project is in BETA. Contributions and suggestions are welcome.
 
 ## Features
 
+- A low impact distributed rate limiter [./v1/ratelimit/redis_delayed_sync.go]
+
 ## Installation
 
 To install the library, use `go get`:
@@ -52,17 +54,11 @@ Refer to the respective files for implementation details:
 - [sync_map.go](sync_map.go)
 
 ## Benchmarking
-Some benchmarking at [./out/bench](./bench/benchmark.txt)
+Benchmarking results at [./out/bench](./out/bench/)
 
-To benchmark the different implementations, use the following command:
-
-```bash
-docker compose up -d
-make bench-all
-```
 
 ### Benchmarking results
-CPU Info
+Info of machine 
 ```bash
 > sysctl -a machdep.cpu
 machdep.cpu.cores_per_package: 10
@@ -71,9 +67,6 @@ machdep.cpu.logical_per_package: 10
 machdep.cpu.thread_count: 10
 machdep.cpu.brand_string: Apple M1 Pro
 ```
-
-
-
 
 ## Contributing
 
@@ -84,7 +77,5 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Authors and Acknowledgments
-
-- [Your Name](https://github.com/yourusername) - Initial work
 
 
