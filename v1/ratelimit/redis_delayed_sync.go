@@ -17,11 +17,9 @@ type RedisDelayedSync struct {
 	cancel       context.CancelFunc
 	inner        *SyncMapLoadThenStore[*limiter.ResetBasedLimiter]
 	rdb          *redis.Client
-	currentIndex atomic.Int32
+	indexToSync  atomic.Int32
 	toSync       []sync.Map
 	lastSynced   map[string]int64
-	opt          RedisDelayedSyncOption
-	burstInMs    float64
 }
 
 type RedisDelayedSyncOption struct {
@@ -45,10 +43,8 @@ func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *Redis
 		rdb:          opt.RedisClient,
 		syncInterval: opt.SyncInterval,
 		inner:        NewSyncMapLoadThenStore(limiter.NewResetbasedLimiter, opt.TokenPerSec, opt.Burst),
-		toSync:       make([]sync.Map, 2),
+		toSync:       make([]sync.Map, 1),
 		lastSynced:   map[string]int64{},
-		opt:          opt,
-		burstInMs:    float64(opt.Burst) / opt.TokenPerSec * 1000,
 	}
 	go func() {
 		ticker := time.NewTicker(opt.SyncInterval)
@@ -58,8 +54,8 @@ func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *Redis
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				indexToSync := rl.currentIndex.Load()
-				rl.currentIndex.Store((indexToSync + 1) % int32(len(rl.toSync)))
+				indexToSync := rl.indexToSync.Load()
+				rl.indexToSync.Store((indexToSync + 1) % int32(len(rl.toSync)))
 				if err := rl.syncAll(indexToSync); err != nil {
 					// TODO: handle error
 					fmt.Printf("error syncing: %v\n", err)
@@ -75,27 +71,26 @@ func (r *RedisDelayedSync) Allow(key string) (bool, error) {
 }
 
 func (r *RedisDelayedSync) AllowN(key string, n int) (bool, error) {
-	ok, err := r.inner.AllowN(key, n)
-	if ok {
-		r.toSync[r.currentIndex.Load()].LoadOrStore(key, struct{}{})
-	}
-	return ok, err
+	r.toSync[r.indexToSync.Load()].LoadOrStore(key, struct{}{})
+	return r.inner.AllowN(key, n)
 }
 
 // Note: This function is not thread safe
 func (r *RedisDelayedSync) syncAll(index int32) error {
+	// Consider using a different approach to prioritize syncing the keys that are used more frequently
 	r.toSync[index].Range(func(key, value any) bool {
 		if err := r.sync(key.(string)); err != nil {
 			return false
 		}
 		return true
 	})
+	// BUG: we used to clear the toSync[index] after syncing, but this will cause issues on keys that are used infrequently and the sync interval is large enough, the key could use up the burst limit before the key is synced, then skip a sync interval, and then use up the burst limit again on multiple instances
 	// Assumption: clear finishes before r.currentIndex rotates back to the index that is being cleared
 	// If the assumption is not true, the key will be synced again in the next sync interval if the key is used again
 	// We can avoid this, by:
 	// A: if the syncInterval is large enough to ensure that the clear finishes before the next sync
 	// B: if the array of sync.Map is large enough to ensure that the clear finishes before a full rotation is made
-	go r.toSync[index].Clear()
+	// go r.toSync[index].Clear()
 	return nil
 }
 

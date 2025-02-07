@@ -92,6 +92,8 @@ type SyncMapLoadThenStore[L limiter.Limiter] struct {
 	c     func(float64, int) L
 }
 
+var _ Ratelimiter = &SyncMapLoadThenStore[limiter.Limiter]{}
+
 func NewSyncMapLoadThenStore[L limiter.Limiter](constructor func(float64, int) L, rps float64, burst int) *SyncMapLoadThenStore[L] {
 	return &SyncMapLoadThenStore[L]{
 		tps:   rps,
