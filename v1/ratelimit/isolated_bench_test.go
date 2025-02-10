@@ -33,11 +33,11 @@ func BenchmarkIsolated(b *testing.B) {
 		name    string
 		limiter Ratelimiter
 	}{
-		{name: "SyncMap + LoadOrStore", limiter: NewSyncMapLoadOrStore(nil, rate, burst)},
-		{name: "SyncMap + Load > LoadOrStore", limiter: NewSyncMapLoadThenLoadOrStore(nil, rate, burst)},
+		{name: "SyncMap + LoadOrStore", limiter: NewSyncMapLoadOrStore(NewDefaultLimiter, rate, burst)},
+		{name: "SyncMap + Load > LoadOrStore", limiter: NewSyncMapLoadThenLoadOrStore(NewDefaultLimiter, rate, burst)},
 		{name: "SyncMap + Load > Store", limiter: NewSyncMapLoadThenStore(NewDefaultLimiter, rate, burst)},
-		{name: "Map + Mutex", limiter: NewMutex(nil, rate, burst)},
-		{name: "Map + RWMutex", limiter: NewRWMutex(nil, rate, burst)},
+		{name: "Map + Mutex", limiter: NewMutex(NewDefaultLimiter, rate, burst)},
+		{name: "Map + RWMutex", limiter: NewRWMutex(NewDefaultLimiter, rate, burst)},
 		{name: "Redis", limiter: NewGoRedis(newRDB(), rate, burst)},
 		{name: "Redis With Delay", limiter: NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
 			RedisClient:  newRDB(),

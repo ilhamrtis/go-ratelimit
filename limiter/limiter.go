@@ -1,7 +1,7 @@
 package limiter
 
 type Limiter interface {
-	Allow() (bool, error)
-	AllowN(int) (bool, error)
-	ForceN(int) (bool, error)
+	Allow() bool
+	AllowN(int) bool
+	ForceN(int) bool
 }

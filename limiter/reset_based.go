@@ -16,6 +16,8 @@ type ResetBasedLimiter struct {
 	deltaSince     float64
 }
 
+var _ Limiter = &ResetBasedLimiter{}
+
 func NewResetbasedLimiter(tps float64, burst int) *ResetBasedLimiter {
 	tpns := tps / float64(time.Second/time.Nanosecond)
 	burstInNano := float64(burst) / tpns
@@ -28,14 +30,14 @@ func NewResetbasedLimiter(tps float64, burst int) *ResetBasedLimiter {
 	}
 }
 
-func (l *ResetBasedLimiter) Allow() (bool, error) {
+func (l *ResetBasedLimiter) Allow() bool {
 	return l.AllowN(1)
 }
 
-func (l *ResetBasedLimiter) allowN(n int, shouldCheck bool) (bool, error) {
+func (l *ResetBasedLimiter) allowN(n int, shouldCheck bool) bool {
 	now := float64(time.Now().UnixNano())
 	if (shouldCheck && l.resetAt > now) || n > l.burst {
-		return false, nil
+		return false
 	}
 
 	incrementInNano := float64(n) / l.tokenPerNano
@@ -43,18 +45,18 @@ func (l *ResetBasedLimiter) allowN(n int, shouldCheck bool) (bool, error) {
 	defer l.mu.Unlock()
 	newResetAt := math.Max(l.resetAt, now-l.burstInNano) + incrementInNano
 	if shouldCheck && newResetAt > now {
-		return false, nil
+		return false
 	}
 	l.resetAt = newResetAt
 	l.deltaSince += incrementInNano
-	return true, nil
+	return true
 }
 
-func (l *ResetBasedLimiter) AllowN(n int) (bool, error) {
+func (l *ResetBasedLimiter) AllowN(n int) bool {
 	return l.allowN(n, true)
 }
 
-func (l *ResetBasedLimiter) ForceN(n int) (bool, error) {
+func (l *ResetBasedLimiter) ForceN(n int) bool {
 	return l.allowN(n, false)
 }
 

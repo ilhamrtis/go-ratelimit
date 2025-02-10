@@ -6,84 +6,77 @@ import (
 	"github.com/yesyoukenspace/go-ratelimit/limiter"
 )
 
-type SyncMapLoadThenLoadOrStore struct {
+type SyncMapLoadThenLoadOrStore[L limiter.Limiter] struct {
 	m sync.Map
 	R float64
 	B int
-	c NewLimiterFn
+	c func(float64, int) L
 }
 
-var _ Ratelimiter = &SyncMapLoadThenLoadOrStore{}
+var _ Ratelimiter = &SyncMapLoadThenLoadOrStore[limiter.Limiter]{}
 
-func NewSyncMapLoadThenLoadOrStore(constructor NewLimiterFn, reqPerSec float64, burst int) *SyncMapLoadThenLoadOrStore {
-	if constructor == nil {
-		constructor = NewDefaultLimiter
-	}
-	return &SyncMapLoadThenLoadOrStore{
+func NewSyncMapLoadThenLoadOrStore[L limiter.Limiter](constructor func(float64, int) L, reqPerSec float64, burst int) *SyncMapLoadThenLoadOrStore[L] {
+	return &SyncMapLoadThenLoadOrStore[L]{
 		c: constructor,
 		R: reqPerSec,
 		B: burst,
 	}
 }
 
-func (d *SyncMapLoadThenLoadOrStore) AllowN(key string, n int) (bool, error) {
+func (d *SyncMapLoadThenLoadOrStore[L]) AllowN(key string, n int) (bool, error) {
 	l, ok := d.m.Load(key)
 	// if key is not found, then create a new limiter and store it
 	// reduces allocation by doing this
 	if !ok {
 		l, _ = d.m.LoadOrStore(key, d.c(d.R, d.B))
 	}
-	return l.(limiter.Limiter).AllowN(n)
+	return l.(limiter.Limiter).AllowN(n), nil
 }
 
-func (d *SyncMapLoadThenLoadOrStore) ForceN(key string, n int) (bool, error) {
+func (d *SyncMapLoadThenLoadOrStore[L]) ForceN(key string, n int) (bool, error) {
 	l, ok := d.m.Load(key)
 	// if key is not found, then create a new limiter and store it
 	// reduces allocation by doing this
 	if !ok {
 		l, _ = d.m.LoadOrStore(key, d.c(d.R, d.B))
 	}
-	return l.(limiter.Limiter).AllowN(n)
+	return l.(limiter.Limiter).AllowN(n), nil
 }
 
-func (d *SyncMapLoadThenLoadOrStore) Allow(key string) (bool, error) {
+func (d *SyncMapLoadThenLoadOrStore[L]) Allow(key string) (bool, error) {
 	return d.AllowN(key, 1)
 }
 
-type SyncMapLoadOrStore struct {
+type SyncMapLoadOrStore[L limiter.Limiter] struct {
 	m sync.Map
 	R float64
 	B int
-	c NewLimiterFn
+	c func(float64, int) L
 }
 
-func NewSyncMapLoadOrStore(constructor NewLimiterFn, reqPerSec float64, burst int) *SyncMapLoadOrStore {
-	if constructor == nil {
-		constructor = NewDefaultLimiter
-	}
-
-	return &SyncMapLoadOrStore{
+func NewSyncMapLoadOrStore[L limiter.Limiter](constructor func(float64, int) L, reqPerSec float64, burst int) *SyncMapLoadOrStore[L] {
+	return &SyncMapLoadOrStore[L]{
 		c: constructor,
 		R: reqPerSec,
 		B: burst,
 	}
 }
 
-func (d *SyncMapLoadOrStore) AllowN(key string, n int) (bool, error) {
+func (d *SyncMapLoadOrStore[L]) AllowN(key string, n int) (bool, error) {
 	l, _ := d.m.LoadOrStore(key, d.c(d.R, d.B))
-	return l.(limiter.Limiter).AllowN(n)
+	return l.(limiter.Limiter).AllowN(n), nil
 }
 
-func (d *SyncMapLoadOrStore) ForceN(key string, n int) (bool, error) {
+func (d *SyncMapLoadOrStore[L]) ForceN(key string, n int) (bool, error) {
 	l, _ := d.m.LoadOrStore(key, d.c(d.R, d.B))
-	return l.(limiter.Limiter).ForceN(n)
+	return l.(limiter.Limiter).ForceN(n), nil
 }
 
-func (d *SyncMapLoadOrStore) Allow(key string) (bool, error) {
+func (d *SyncMapLoadOrStore[L]) Allow(key string) (bool, error) {
 	return d.AllowN(key, 1)
 }
 
-var _ Ratelimiter = &SyncMapLoadOrStore{}
+var _ Ratelimiter = &SyncMapLoadOrStore[limiter.Limiter]{}
 
 type SyncMapLoadThenStore[L limiter.Limiter] struct {
 	m     sync.Map
@@ -110,7 +103,7 @@ func (r *SyncMapLoadThenStore[L]) AllowN(key string, n int) (bool, error) {
 		// note: We might overwrite the limiter if multiple goroutines are trying to create the limiter at the same time, it is not a big deal as we may just have a little inaccurate rate limiting for a short period of time
 		r.m.Store(key, l)
 	}
-	return l.(L).AllowN(n)
+	return l.(L).AllowN(n), nil
 }
 
 func (r *SyncMapLoadThenStore[L]) GetLimiter(key string) L {

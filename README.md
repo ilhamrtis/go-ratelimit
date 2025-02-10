@@ -2,12 +2,8 @@
 
 `go-ratelimit` is a Go library for rate limiting using various synchronization mechanisms. It provides different implementations of rate limiters using `sync.Mutex`, `sync.RWMutex`, and `sync.Map`.
 
-## Project Status
-
-This project is in BETA. Contributions and suggestions are welcome.
-
 ## Features
-- A low impact rate limiter backed by redis made for distributed systems that requires low latency but allow some inaccuracy in enforcing rate limit - [code](./v1/ratelimit/redis_delayed_sync.go)
+- All `limiter.Limiter` implementations follow the `Ratelimit` interface in [domain.go](./domain.go) which closely follows `golang.org/x/time/rate` interface as much as possible.
 
 ## Installation
 
@@ -18,39 +14,23 @@ go get -u github.com/yesyoukenspace/go-ratelimit
 ```
 
 ## Usage
-All `limiter.Limiter` implementations follow the `Ratelimit` interface in [domain.go](./domain.go) 
 
-```go
-package main
+## Implementations - Distributed Rate Limiting 
+Look at [distributed_bench_test.go](v1/ratelimit/distributed_bench_test.go) for examples.
 
-import (
-	"fmt"
-	"github.com/yesyoukenspace/go-ratelimit/v1"
-)
+### **RedisDelayedSync**
+- A low impact rate limiter backed by redis made for distributed systems that requires low latency but allow some inaccuracy in enforcing rate limit - [code](./v1/ratelimit/redis_delayed_sync.go)
+- Uses `SyncMapLoadThenStore` to manage local states and synchronizes with redis asynchronously thus not blocking `AllowN` functions
 
-func main() {
-	ratelimiter := ratelimit.NewDefault(10, 5)
-	key := "user123"
-	if ok, _ := ratelimiter.Allow(key); ok {
-		fmt.Println("Request allowed")
-	} else {
-		fmt.Println("Request denied")
-	}
-}
-```
+### **GoRedisRate**
+This is just a wrapper around `github.com/go-redis/redis_rate`, used primarily for testing and benchmarking.
 
-### Available Implementations
-Here are the available implementations:
-
+## Implementations - Isolated Rate Limiting 
 - **Mutex**: Uses `sync.Mutex`.
 - **RWMutex**: Uses `sync.RWMutex`.
 - **SyncMapLoadThenLoadOrStore**: Uses `sync.Map` with `Load` then `LoadOrStore`.
 - **SyncMapLoadOrStore**: Uses `sync.Map` with `LoadOrStore`.
 - **SyncMapLoadThenStore**: Uses `sync.Map` with `Load` then `Store`.
-
-Refer to the respective files for implementation details:
-- [mutex.go](mutex.go)
-- [sync_map.go](sync_map.go)
 
 ## Benchmarking
 Benchmarking results at [./out/bench](./out/bench/)
@@ -77,7 +57,9 @@ See the [LICENSE](LICENSE) file for details.
 
 ## References
 - [go-redis/redis_rate](https://github.com/go-redis/redis_rate)
+- [uber-go/ratelimit](https://github.com/uber-go/ratelimit)
 
 ## Authors and Acknowledgments
+- @YesYouKenSpace
 
 

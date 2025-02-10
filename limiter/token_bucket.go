@@ -22,15 +22,15 @@ func NewBucket(rate float64, burst int) *Bucket {
 	}
 }
 
-func (b *Bucket) ForceN(n int) (bool, error) {
+func (b *Bucket) ForceN(n int) bool {
 	return b.allowN(n, false)
 }
 
-func (b *Bucket) AllowN(n int) (bool, error) {
+func (b *Bucket) AllowN(n int) bool {
 	return b.allowN(n, true)
 }
 
-func (b *Bucket) allowN(n int, shouldCheck bool) (bool, error) {
+func (b *Bucket) allowN(n int, shouldCheck bool) bool {
 	now := time.Now()
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -47,12 +47,12 @@ func (b *Bucket) allowN(n int, shouldCheck bool) (bool, error) {
 	nFloat := float64(n)
 	if !shouldCheck || b.remaining >= nFloat {
 		b.remaining -= nFloat
-		return true, nil
+		return true
 	} else {
-		return false, nil
+		return false
 	}
 }
 
-func (b *Bucket) Allow() (bool, error) {
+func (b *Bucket) Allow() bool {
 	return b.AllowN(1)
 }

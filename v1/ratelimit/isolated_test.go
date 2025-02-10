@@ -34,7 +34,7 @@ func TestIsolatedAllow(t *testing.T) {
 		{
 			name: "SyncMap + Load > LoadOrStore",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewSyncMapLoadThenLoadOrStore(nil, l, i)
+				return NewSyncMapLoadThenLoadOrStore(NewDefaultLimiter, l, i)
 			},
 		},
 		{
@@ -46,19 +46,19 @@ func TestIsolatedAllow(t *testing.T) {
 		{
 			name: "SyncMap + LoadOrStore",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewSyncMapLoadOrStore(nil, l, i)
+				return NewSyncMapLoadOrStore(NewDefaultLimiter, l, i)
 			},
 		},
 		{
 			name: "Map + Mutex",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewMutex(nil, l, i)
+				return NewMutex(NewDefaultLimiter, l, i)
 			},
 		},
 		{
 			name: "Map + RWMutex",
 			constructor: func(l float64, i int) Ratelimiter {
-				return NewRWMutex(nil, l, i)
+				return NewRWMutex(NewDefaultLimiter, l, i)
 			},
 		},
 		{

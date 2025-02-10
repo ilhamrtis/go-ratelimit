@@ -15,7 +15,7 @@ var limiters = []struct {
 	{
 		name: "golang.org/x/time/rate",
 		constructor: func(limit float64, burst int) Limiter {
-			return NewDefaultLimiter(limit, burst)
+			return NewBuiltinLimiter(limit, burst)
 		},
 	},
 	{
@@ -76,7 +76,7 @@ func TestLimiterAllow(t *testing.T) {
 				for {
 					select {
 					case <-ticker.C:
-						if ok, _ := limiter.Allow(); ok {
+						if limiter.Allow() {
 							allowed++
 						} else {
 							denied++

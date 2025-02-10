@@ -16,7 +16,7 @@ func BenchmarkLimiter(b *testing.B) {
 		limiter Limiter
 	}{
 		{name: "Bucket", limiter: NewBucket(r, burst)},
-		{name: "DefaultLimiter", limiter: NewDefaultLimiter(r, burst)},
+		{name: "DefaultLimiter", limiter: NewBuiltinLimiter(r, burst)},
 		{name: "ResetBasedLimiter", limiter: NewResetbasedLimiter(r, burst)},
 	}
 
@@ -37,7 +37,7 @@ func limiterRunner(b *testing.B, name string, numberOfGoroutines int, limiter Li
 		b.RunParallel(func(pb *testing.PB) {
 			a, d := int64(0), int64(0)
 			for pb.Next() {
-				if ok, _ := limiter.Allow(); ok {
+				if limiter.Allow() {
 					a++
 				} else {
 					d++
