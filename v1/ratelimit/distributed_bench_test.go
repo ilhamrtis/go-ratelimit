@@ -60,7 +60,7 @@ type benchmarkDistributedConfig struct {
 
 func benchmarkDistributed(b *testing.B, c benchmarkDistributedConfig) bool {
 	maxAllowed, maxDisallowed, maxLapsed := 0.0, 0.0, 0.0
-	name := strings.ReplaceAll(fmt.Sprintf("%s", c.name), " ", "_")
+	name := strings.ReplaceAll(c.name, " ", "_")
 	runResult := b.Run(name, func(b *testing.B) {
 		b.ReportAllocs()
 		b.SetParallelism(c.concurrentUsers)

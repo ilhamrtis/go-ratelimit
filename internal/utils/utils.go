@@ -30,7 +30,10 @@ func Max(a, b int) int {
 
 func RandString(bytes int) string {
 	token := make([]byte, bytes)
-	rand.Read(token)
+	_, err := rand.Read(token)
+	if err != nil {
+		panic(err)
+	}
 	return base64.StdEncoding.EncodeToString(token)
 }
 

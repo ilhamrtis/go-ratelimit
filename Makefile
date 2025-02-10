@@ -7,6 +7,9 @@ CONCURRENT_USERS?=32768
 test:
 	go test -test.count=$(TEST_COUNT) ./... -v -parallel=8
 
+lint:
+	golangci-lint run
+
 bench-all: bench-limiter bench-isolated bench-distributed
 
 # Bench recipes for limiter and ratelimit
