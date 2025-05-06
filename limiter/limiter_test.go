@@ -56,10 +56,10 @@ func TestLimiterAllow(t *testing.T) {
 			tolerance:       0.001,
 		},
 		{
-			reqPerSec:       1000,
-			burst:           2000,
+			reqPerSec:       500,
+			burst:           1000,
 			runFor:          3 * time.Second,
-			expectedAllowed: 5000,
+			expectedAllowed: 2500,
 			tolerance:       0.0001,
 		},
 	}
