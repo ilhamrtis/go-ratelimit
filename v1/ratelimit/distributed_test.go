@@ -14,16 +14,16 @@ func TestDistributedAllow(t *testing.T) {
 		{
 			reqPerSec:       100,
 			burst:           100,
-			runFor:          25 * time.Second,
-			expectedAllowed: 2600,
+			runFor:          20 * time.Second,
+			expectedAllowed: 2100,
 			tolerance:       0.02,
 			instances:       5,
 		},
 		{
 			reqPerSec:       100,
 			burst:           100,
-			runFor:          25 * time.Second,
-			expectedAllowed: 2600,
+			runFor:          20 * time.Second,
+			expectedAllowed: 2100,
 			tolerance:       0.1,
 			instances:       20,
 		},
@@ -51,7 +51,7 @@ func TestDistributedAllow(t *testing.T) {
 			},
 		},
 	}
-	for _, ratelimiter := range ratelimiters[1:] {
+	for _, ratelimiter := range ratelimiters {
 		for _, tt := range tests {
 			testDistributedRatelimiter(t, testDistributedRatelimiterConfig{
 				name:            ratelimiter.name,
@@ -84,22 +84,22 @@ func testDistributedRatelimiter(t *testing.T, tt testDistributedRatelimiterConfi
 		rStr := utils.RandString(4)
 		totalAllowed := 0
 		totalDenied := 0
-		lgs := make([]Ratelimiter, tt.instances)
+		ratelimiters := make([]Ratelimiter, tt.instances)
 		resultsChan := make(chan []int, tt.instances)
 		for i := 0; i < tt.instances; i++ {
-			lgs[i] = tt.constructor(tt.reqPerSec, tt.burst)
+			ratelimiters[i] = tt.constructor(tt.reqPerSec, tt.burst)
 		}
-		for _, lg := range lgs {
+		for _, ratelimiter := range ratelimiters {
 			ticker := time.NewTicker(time.Millisecond)
 			timer := time.NewTimer(tt.runFor)
-			go func(lg Ratelimiter) {
+			go func(ratelimiter Ratelimiter) {
 				denied := 0
 				allowed := 0
 
 				for {
 					select {
 					case <-ticker.C:
-						if ok, _ := lg.Allow(rStr); ok {
+						if ok, _ := ratelimiter.Allow(rStr); ok {
 							allowed++
 						} else {
 							denied++
@@ -110,10 +110,10 @@ func testDistributedRatelimiter(t *testing.T, tt testDistributedRatelimiterConfi
 						return
 					}
 				}
-			}(lg)
+			}(ratelimiter)
 		}
 
-		for range lgs {
+		for range ratelimiters {
 			results := <-resultsChan
 			totalAllowed += results[0]
 			totalDenied += results[1]

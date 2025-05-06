@@ -22,7 +22,11 @@ func newRDB(dbIndexes ...int) *redis.Client {
 	if len(dbIndexes) > 0 {
 		dbIndex = dbIndexes[0]
 	}
-	return redis.NewClient(&redis.Options{Addr: "localhost:6379", MaxRetries: -1, DialTimeout: 20 * time.Millisecond, PoolTimeout: 0, ContextTimeoutEnabled: true, DB: dbIndex})
+	client := redis.NewClient(&redis.Options{Addr: "localhost:6379", MaxRetries: -1, DialTimeout: 20 * time.Millisecond, PoolTimeout: 0, ContextTimeoutEnabled: true, DB: dbIndex})
+	if err := client.Ping(context.Background()).Err(); err != nil {
+		panic(err)
+	}
+	return client
 }
 
 func BenchmarkIsolated(b *testing.B) {
