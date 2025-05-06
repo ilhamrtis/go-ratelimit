@@ -37,7 +37,7 @@ func BenchmarkDistributed(b *testing.B) {
 		for _, limiter := range ratelimiters {
 			benchmarkDistributed(b, benchmarkDistributedConfig{
 				name:                  limiter.name,
-				concurrentUsers:       concurrentUsers,
+				parallelism:           concurrentUsers,
 				burst:                 burst,
 				rate:                  rate,
 				constructor:           limiter.c,
@@ -50,7 +50,7 @@ func BenchmarkDistributed(b *testing.B) {
 
 type benchmarkDistributedConfig struct {
 	name                  string
-	concurrentUsers       int
+	parallelism           int
 	avgConcurrencyPerUser int
 	burst                 int
 	rate                  float64
@@ -63,7 +63,7 @@ func benchmarkDistributed(b *testing.B, c benchmarkDistributedConfig) bool {
 	name := strings.ReplaceAll(c.name, " ", "_")
 	runResult := b.Run(name, func(b *testing.B) {
 		b.ReportAllocs()
-		b.SetParallelism(c.concurrentUsers)
+		b.SetParallelism(c.parallelism)
 		allowed := atomic.Int64{}
 		disallowed := atomic.Int64{}
 		rls := make([]Ratelimiter, 0, c.numServers)
@@ -72,7 +72,7 @@ func benchmarkDistributed(b *testing.B, c benchmarkDistributedConfig) bool {
 		}
 		b.RunParallel(func(pb *testing.PB) {
 			// To simulate different users hitting different rate limiters in a distributed system
-			rStr := strconv.FormatInt(utils.RandInt(0, int64(c.concurrentUsers/c.avgConcurrencyPerUser)), 10)
+			rStr := strconv.FormatInt(utils.RandInt(0, int64(c.parallelism/c.avgConcurrencyPerUser)), 10)
 			rl := rls[utils.RandInt(0, c.numServers)]
 			a := int64(0)
 			d := int64(0)

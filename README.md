@@ -23,6 +23,8 @@ Look at [distributed_bench_test.go](v1/ratelimit/distributed_bench_test.go) for 
 ### **RedisDelayedSync**
 - A low impact rate limiter backed by redis made for distributed systems that requires low latency but allows some inaccuracy in enforcing rate limit - [code](./v1/ratelimit/redis_delayed_sync.go)
 - Uses `SyncMapLoadThenStore` to manage local states and synchronizes with redis asynchronously thus not blocking `AllowN` functions
+- close to 1000x faster than [go-redis/redis_rate](https://github.com/go-redis/redis_rate)
+  - go-redis reaches maximum output at 45000 rps on benchmark machine while RedisDelayedSync could go up to 44 million rps
 
 ### **GoRedisRate**
 This is just a wrapper around `github.com/go-redis/redis_rate`, used primarily for testing and benchmarking.
