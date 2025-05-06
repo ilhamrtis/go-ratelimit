@@ -15,11 +15,13 @@ go get -u github.com/yesyoukenspace/go-ratelimit
 
 ## Usage
 
+For usage examples checkout [distributed_bench_test.go](v1/ratelimit/distributed_bench_test.go) 
+
 ## Implementations - Distributed Rate Limiting 
 Look at [distributed_bench_test.go](v1/ratelimit/distributed_bench_test.go) for examples.
 
 ### **RedisDelayedSync**
-- A low impact rate limiter backed by redis made for distributed systems that requires low latency but allow some inaccuracy in enforcing rate limit - [code](./v1/ratelimit/redis_delayed_sync.go)
+- A low impact rate limiter backed by redis made for distributed systems that requires low latency but allows some inaccuracy in enforcing rate limit - [code](./v1/ratelimit/redis_delayed_sync.go)
 - Uses `SyncMapLoadThenStore` to manage local states and synchronizes with redis asynchronously thus not blocking `AllowN` functions
 
 ### **GoRedisRate**
