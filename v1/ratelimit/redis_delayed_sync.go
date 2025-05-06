@@ -122,7 +122,7 @@ func (r *RedisDelayedSync) sync(key string) error {
 	// diff==0: if the key is not set by another server
 	// diff>0: if the key is set by another server and the current server joined the cluster later -
 	// this is the case where the clock drift could be an issue if the key is set by another server, the clock drift will affect calculation of the diff
-	diff := float64(cmd.Val()-r.lastSynced[key]) - delta
+	diff := cmd.Val() - r.lastSynced[key] - delta
 	if diff > 0 {
 		limiter.IncrementResetAtBy(diff)
 	}

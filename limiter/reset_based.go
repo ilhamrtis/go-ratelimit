@@ -3,31 +3,31 @@ package limiter
 import (
 	"math"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 type ResetBasedLimiter struct {
-	resetAt        float64
-	burst          int
-	tokenPerSecond float64
-	tokenPerNano   float64
-	mu             sync.Mutex
-	burstInNano    float64
-	deltaSince     float64
+	resetAt            atomic.Int64
+	burst              int
+	nanosecondPerToken int64
+	mu                 sync.RWMutex
+	burstInNano        int64
+	deltaSince         atomic.Int64
 }
 
 var _ Limiter = &ResetBasedLimiter{}
 
 func NewResetbasedLimiter(tps float64, burst int) *ResetBasedLimiter {
-	tpns := tps / float64(time.Second/time.Nanosecond)
-	burstInNano := float64(burst) / tpns
-	return &ResetBasedLimiter{
-		tokenPerSecond: tps,
-		tokenPerNano:   tpns,
-		burst:          burst,
-		burstInNano:    burstInNano,
-		resetAt:        float64(time.Now().UnixNano()) - burstInNano,
+	nspt := int64(float64(time.Second) / tps)
+	burstInNano := int64(burst) * nspt
+	l := &ResetBasedLimiter{
+		nanosecondPerToken: nspt,
+		burst:              burst,
+		burstInNano:        burstInNano,
 	}
+	l.resetAt.Store(time.Now().UnixNano() - burstInNano)
+	return l
 }
 
 func (l *ResetBasedLimiter) Allow() bool {
@@ -35,20 +35,20 @@ func (l *ResetBasedLimiter) Allow() bool {
 }
 
 func (l *ResetBasedLimiter) allowN(n int, shouldCheck bool) bool {
-	now := float64(time.Now().UnixNano())
-	if (shouldCheck && l.resetAt > now) || n > l.burst {
+	now := time.Now().UnixNano()
+	if (shouldCheck && l.resetAt.Load() > now) || n > l.burst {
 		return false
 	}
 
-	incrementInNano := float64(n) / l.tokenPerNano
+	incrementInNano := int64(n) * l.nanosecondPerToken
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	newResetAt := math.Max(l.resetAt, now-l.burstInNano) + incrementInNano
-	if shouldCheck && newResetAt > now {
+	newResetAt := math.Max(float64(l.resetAt.Load()), float64(now-l.burstInNano)) + float64(incrementInNano)
+	if shouldCheck && newResetAt > float64(now) {
 		return false
 	}
-	l.resetAt = newResetAt
-	l.deltaSince += incrementInNano
+	l.resetAt.Store(int64(newResetAt))
+	l.deltaSince.Add(incrementInNano)
 	return true
 }
 
@@ -60,20 +60,14 @@ func (l *ResetBasedLimiter) ForceN(n int) bool {
 	return l.allowN(n, false)
 }
 
-func (l *ResetBasedLimiter) IncrementResetAtBy(inc float64) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	l.resetAt += inc
+func (l *ResetBasedLimiter) IncrementResetAtBy(inc int64) {
+	l.resetAt.Add(inc)
 }
 
-func (l *ResetBasedLimiter) GetResetAt() float64 {
-	return l.resetAt
+func (l *ResetBasedLimiter) GetResetAt() int64 {
+	return l.resetAt.Load()
 }
 
-func (l *ResetBasedLimiter) PopResetAtDelta() float64 {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	deltaSince := l.deltaSince
-	l.deltaSince = 0
-	return deltaSince
+func (l *ResetBasedLimiter) PopResetAtDelta() int64 {
+	return l.deltaSince.Swap(0)
 }

@@ -67,6 +67,7 @@ func TestLimiterAllow(t *testing.T) {
 	for _, limiter := range limiters {
 		for _, tt := range tests {
 			t.Run(fmt.Sprintf("limiter=%s;rps=%2f;burst=%d", limiter.name, tt.reqPerSec, tt.burst), func(t *testing.T) {
+				t.Parallel()
 				allowed := 0
 				denied := 0
 				ticker := time.NewTicker(time.Millisecond / 2)
