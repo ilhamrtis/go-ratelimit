@@ -43,10 +43,10 @@ func TestDistributedAllow(t *testing.T) {
 			name: "Redis with delay in sync",
 			constructor: func(l float64, i int) Ratelimiter {
 				return NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
-					redisClient:          newRDB(1),
-					replenishedPerSecond: l,
-					burst:                i,
-					syncInterval:         time.Second / 10,
+					RedisClient:          newRDB(1),
+					ReplenishedPerSecond: l,
+					Burst:                i,
+					SyncInterval:         time.Second / 10,
 				})
 			},
 		},

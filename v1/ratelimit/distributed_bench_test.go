@@ -24,10 +24,10 @@ func BenchmarkDistributed(b *testing.B) {
 		{name: "Redis", c: func() Ratelimiter { return NewGoRedis(newRDB(2), rate, burst) }},
 		{name: "Redis with delay in sync", c: func() Ratelimiter {
 			return NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
-				redisClient:          newRDB(3),
-				replenishedPerSecond: rate,
-				burst:                burst,
-				syncInterval:         time.Second / 2,
+				RedisClient:          newRDB(3),
+				ReplenishedPerSecond: rate,
+				Burst:                burst,
+				SyncInterval:         time.Second / 2,
 			})
 		},
 		},

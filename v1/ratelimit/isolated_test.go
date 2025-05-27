@@ -71,10 +71,10 @@ func TestIsolatedAllow(t *testing.T) {
 			name: "Redis with delay in sync",
 			constructor: func(l float64, i int) Ratelimiter {
 				return NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
-					redisClient:          newRDB(),
-					replenishedPerSecond: l,
-					burst:                i,
-					syncInterval:         time.Second / 2,
+					RedisClient:          newRDB(),
+					ReplenishedPerSecond: l,
+					Burst:                i,
+					SyncInterval:         time.Second / 2,
 				})
 			},
 		},
