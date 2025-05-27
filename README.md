@@ -1,47 +1,69 @@
 # go-ratelimit
 
-`go-ratelimit` is a Go library for rate limiting using various synchronization mechanisms. It provides different implementations of rate limiters using `sync.Mutex`, `sync.RWMutex`, and `sync.Map`.
+`go-ratelimit` is a high-performance Go library for rate limiting that provides multiple implementations optimized for different use cases. The library focuses on providing both isolated and distributed rate limiting solutions with a focus on performance and flexibility.
+
+## Design Goals
+
+1. **High Performance**: The library is designed to handle high-throughput distributed servers with minimal latency impact.
+2. **Flexibility**: Multiple implementations to choose from based on your specific needs:
+   - Isolated rate limiting for single-instance applications
+   - Distributed rate limiting for multi-instance deployments
+3. **Compatibility**: Follows the familiar `golang.org/x/time/rate` interface for easy integration
+4. **Accuracy vs Performance Trade-offs**: Different implementations offer different trade-offs between accuracy and performance
 
 ## Features
-- All `limiter.Limiter` implementations follow the `Ratelimit` interface in [domain.go](./domain.go) which closely follows `golang.org/x/time/rate` interface as much as possible.
+
+- All `limiter.Limiter` implementations follow the `Ratelimit` interface in [domain.go](./domain.go) which closely follows `golang.org/x/time/rate` interface
+- Multiple synchronization mechanisms: `sync.Mutex`, `sync.RWMutex`, and `sync.Map`
+- Built-in benchmarking tools to compare different implementations
+- Support for both isolated and distributed rate limiting scenarios
 
 ## Installation
 
-To install the library, use `go get`:
-
+To install the library:
 ```bash
 go get -u github.com/yesyoukenspace/go-ratelimit
 ```
 
 ## Usage
 
-For usage examples checkout [distributed_bench_test.go](v1/ratelimit/distributed_bench_test.go) 
+For usage examples, check out [distributed_bench_test.go](v1/ratelimit/distributed_bench_test.go) and [isolated_bench_test.go](v1/ratelimit/isolated_bench_test.go).
 
-## Implementations - Distributed Rate Limiting 
-Look at [distributed_bench_test.go](v1/ratelimit/distributed_bench_test.go) for examples.
+## Implementations
 
-### **RedisDelayedSync**
-- A low impact rate limiter backed by redis made for distributed systems that requires low latency but allows some inaccuracy in enforcing rate limit - [code](./v1/ratelimit/redis_delayed_sync.go)
-- Uses `SyncMapLoadThenStore` to manage local states and synchronizes with redis asynchronously thus not blocking `AllowN` functions
-- close to 1000x faster than [go-redis/redis_rate](https://github.com/go-redis/redis_rate)
-  - go-redis reaches maximum output at 45000 rps on benchmark machine while RedisDelayedSync could go up to 44 million rps
+### Distributed Rate Limiting
 
-### **GoRedisRate**
-This is just a wrapper around `github.com/go-redis/redis_rate`, used primarily for testing and benchmarking.
+#### **RedisDelayedSync**
+A high-performance distributed rate limiter designed for systems that prioritize throughput over strict accuracy:
 
-## Implementations - Isolated Rate Limiting 
-- **Mutex**: Uses `sync.Mutex`.
-- **RWMutex**: Uses `sync.RWMutex`.
-- **SyncMapLoadThenLoadOrStore**: Uses `sync.Map` with `Load` then `LoadOrStore`.
-- **SyncMapLoadOrStore**: Uses `sync.Map` with `LoadOrStore`.
-- **SyncMapLoadThenStore**: Uses `sync.Map` with `Load` then `Store`.
+- **Design**: Uses a hybrid approach combining local state with asynchronous Redis synchronization
+- **Key Features**:
+  - Non-blocking `AllowN` operations for maximum throughput
+  - Asynchronous Redis synchronization to minimize latency impact
+  - Local state management using `SyncMapLoadThenStore` for concurrent access
+- **Performance**: Up to 1000x faster than [go-redis/redis_rate](https://github.com/go-redis/redis_rate)
+  - Benchmarks show 44 million RPS vs 45,000 RPS for go-redis/redis_rate
+- **Trade-offs**: Slightly relaxed accuracy in exchange for significantly better performance
+- **Use Cases**: High-throughput distributed systems where occasional rate limit inaccuracies are acceptable
+
+#### **GoRedisRate**
+A wrapper around `github.com/go-redis/redis_rate` for testing and benchmarking purposes.
+
+### Isolated Rate Limiting
+
+The repository provides several implementations optimized for single-instance use cases:
+
+- **Mutex**: Simple implementation using `sync.Mutex` for basic rate limiting
+- **RWMutex**: Optimized for read-heavy workloads using `sync.RWMutex`
+- **SyncMapLoadThenLoadOrStore**: Uses `sync.Map` with `Load` then `LoadOrStore` pattern
+- **SyncMapLoadOrStore**: Direct `sync.Map` implementation using `LoadOrStore`
+- **SyncMapLoadThenStore**: Optimized `sync.Map` implementation using `Load` then `Store` pattern
 
 ## Benchmarking
-Benchmarking results at [./out/bench](./out/bench/)
 
+The repo includes benchmarks to compare different implementations. Results are available at [./out/bench](./out/bench/).
 
-### Benchmarking results
-Info of machine 
+### Benchmark Environment
 ```bash
 > sysctl -a machdep.cpu
 machdep.cpu.cores_per_package: 10
