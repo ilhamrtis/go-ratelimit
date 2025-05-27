@@ -11,6 +11,6 @@ type Ratelimiter interface {
 	AllowN(string, int) (bool, error)
 }
 
-func NewDefaultLimiter(reqPerSec float64, burst int) limiter.Limiter {
-	return limiter.NewResetbasedLimiter(reqPerSec, burst)
+func NewDefaultLimiter(replenishedPerSecond float64, burst int) limiter.Limiter {
+	return limiter.NewResetbasedLimiter(replenishedPerSecond, burst)
 }

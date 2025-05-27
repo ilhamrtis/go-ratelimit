@@ -6,90 +6,90 @@ import (
 	"github.com/yesyoukenspace/go-ratelimit/limiter"
 )
 
-type Mutex[L limiter.Limiter] struct {
-	mu sync.Mutex
-	M  map[string]L
-	R  float64
-	B  int
-	c  func(float64, int) L
+type Mutex[Limiter limiter.Limiter] struct {
+	mu                   sync.Mutex
+	limiters             map[string]Limiter
+	replenishedPerSecond float64
+	burst                int
+	newLimiterFn         func(float64, int) Limiter
 }
 
 var _ Ratelimiter = &Mutex[limiter.Limiter]{}
 
-func NewMutex[L limiter.Limiter](constuctor func(float64, int) L, reqPerSec float64, burst int) *Mutex[L] {
-	return &Mutex[L]{
-		M: make(map[string]L),
-		R: reqPerSec,
-		B: burst,
-		c: constuctor,
+func NewMutex[Limiter limiter.Limiter](newLimiterFn func(float64, int) Limiter, replenishedPerSecond float64, burst int) *Mutex[Limiter] {
+	return &Mutex[Limiter]{
+		limiters:             make(map[string]Limiter),
+		replenishedPerSecond: replenishedPerSecond,
+		burst:                burst,
+		newLimiterFn:         newLimiterFn,
 	}
 }
 
-func (d *Mutex[L]) getLimiter(key string) L {
+func (d *Mutex[Limiter]) getLimiter(key string) Limiter {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	l, ok := d.M[key]
+	l, ok := d.limiters[key]
 	if !ok {
-		l = d.c(d.R, d.B)
-		d.M[key] = l
+		l = d.newLimiterFn(d.replenishedPerSecond, d.burst)
+		d.limiters[key] = l
 	}
 	return l
 }
 
-func (d *Mutex[L]) AllowN(key string, n int) (bool, error) {
+func (d *Mutex[Limiter]) AllowN(key string, cost int) (bool, error) {
 	l := d.getLimiter(key)
-	return l.AllowN(n), nil
+	return l.AllowN(cost), nil
 }
 
-func (d *Mutex[L]) ForceN(key string, n int) (bool, error) {
+func (d *Mutex[Limiter]) ForceN(key string, cost int) (bool, error) {
 	l := d.getLimiter(key)
-	return l.ForceN(n), nil
+	return l.ForceN(cost), nil
 }
 
-func (d *Mutex[L]) Allow(key string) (bool, error) {
+func (d *Mutex[Limiter]) Allow(key string) (bool, error) {
 	return d.AllowN(key, 1)
 }
 
-type RWMutex[L limiter.Limiter] struct {
-	mu sync.RWMutex
-	M  map[string]L
-	R  float64
-	B  int
-	c  func(float64, int) L
+type RWMutex[Limiter limiter.Limiter] struct {
+	mu                   sync.RWMutex
+	limiters             map[string]Limiter
+	replenishedPerSecond float64
+	burst                int
+	newLimiterFn         func(float64, int) Limiter
 }
 
-func NewRWMutex[L limiter.Limiter](constructor func(float64, int) L, reqPerSec float64, burst int) *RWMutex[L] {
-	return &RWMutex[L]{
-		M: make(map[string]L),
-		R: reqPerSec,
-		B: burst,
-		c: constructor,
+func NewRWMutex[Limiter limiter.Limiter](newLimiterFn func(float64, int) Limiter, replenishedPerSecond float64, burst int) *RWMutex[Limiter] {
+	return &RWMutex[Limiter]{
+		limiters:             make(map[string]Limiter),
+		replenishedPerSecond: replenishedPerSecond,
+		burst:                burst,
+		newLimiterFn:         newLimiterFn,
 	}
 }
 
-func (d *RWMutex[L]) getLimiter(key string) limiter.Limiter {
+func (d *RWMutex[Limiter]) getLimiter(key string) limiter.Limiter {
 	d.mu.RLock()
-	l, ok := d.M[key]
+	l, ok := d.limiters[key]
 	d.mu.RUnlock()
 	if !ok {
 		d.mu.Lock()
 		defer d.mu.Unlock()
-		l = d.c(d.R, d.B)
-		d.M[key] = l
+		l = d.newLimiterFn(d.replenishedPerSecond, d.burst)
+		d.limiters[key] = l
 	}
 	return l
 }
 
-func (d *RWMutex[L]) AllowN(key string, n int) (bool, error) {
+func (d *RWMutex[Limiter]) AllowN(key string, cost int) (bool, error) {
 	l := d.getLimiter(key)
-	return l.AllowN(n), nil
+	return l.AllowN(cost), nil
 }
 
-func (d *RWMutex[L]) ForceN(key string, n int) (bool, error) {
+func (d *RWMutex[Limiter]) ForceN(key string, cost int) (bool, error) {
 	l := d.getLimiter(key)
-	return l.ForceN(n), nil
+	return l.ForceN(cost), nil
 }
 
-func (d *RWMutex[L]) Allow(key string) (bool, error) {
+func (d *RWMutex[Limiter]) Allow(key string) (bool, error) {
 	return d.AllowN(key, 1)
 }

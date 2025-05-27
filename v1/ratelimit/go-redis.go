@@ -20,8 +20,8 @@ func (d *GoRedisRate) Allow(key string) (bool, error) {
 	return d.AllowN(key, 1)
 }
 
-func (d *GoRedisRate) AllowN(key string, n int) (bool, error) {
-	res, err := d.limiter.AllowN(d.ctx, key, d.limit, n)
+func (d *GoRedisRate) AllowN(key string, cost int) (bool, error) {
+	res, err := d.limiter.AllowN(d.ctx, key, d.limit, cost)
 	if err != nil {
 		return false, err
 	}
@@ -29,15 +29,15 @@ func (d *GoRedisRate) AllowN(key string, n int) (bool, error) {
 }
 
 // ForceN is not implemented for GoRedisRate
-func (d *GoRedisRate) ForceN(key string, n int) (bool, error) {
-	return d.AllowN(key, n)
+func (d *GoRedisRate) ForceN(key string, cost int) (bool, error) {
+	return d.AllowN(key, cost)
 }
 
-func NewGoRedis(rdb *redis.Client, rps float64, burst int) *GoRedisRate {
+func NewGoRedis(redisClient *redis.Client, replenishedPerSecond float64, burst int) *GoRedisRate {
 	return &GoRedisRate{
 		ctx:     context.Background(),
-		limiter: redis_rate.NewLimiter(rdb),
+		limiter: redis_rate.NewLimiter(redisClient),
 		// TODO: rate here only works for more than 1 rps, allow for less than 1 rps, and integers only
-		limit: redis_rate.Limit{Rate: int(rps), Burst: burst, Period: time.Second},
+		limit: redis_rate.Limit{Rate: int(replenishedPerSecond), Burst: burst, Period: time.Second},
 	}
 }

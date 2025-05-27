@@ -16,19 +16,19 @@ type RedisDelayedSync struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
 	inner        *SyncMapLoadThenStore[*limiter.ResetBasedLimiter]
-	rdb          *redis.Client
+	redisClient  *redis.Client
 	indexToSync  atomic.Int32
 	toSync       []sync.Map
 	lastSynced   map[string]int64
 }
 
 type RedisDelayedSyncOption struct {
-	// SyncInterval is the interval to sync the rate limit to the redis
+	// syncInterval is the interval to sync the rate limit to the redis
 	// Adjust this value to trade off between the performance and the accuracy of the rate limit
-	SyncInterval time.Duration
-	TokenPerSec  float64
-	Burst        int
-	RedisClient  *redis.Client
+	syncInterval         time.Duration
+	replenishedPerSecond float64
+	burst                int
+	redisClient          *redis.Client
 }
 
 func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *RedisDelayedSync {
@@ -40,14 +40,14 @@ func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *Redis
 	rl := &RedisDelayedSync{
 		ctx:          ctx,
 		cancel:       cancel,
-		rdb:          opt.RedisClient,
-		syncInterval: opt.SyncInterval,
-		inner:        NewSyncMapLoadThenStore(limiter.NewResetbasedLimiter, opt.TokenPerSec, opt.Burst),
+		redisClient:  opt.redisClient,
+		syncInterval: opt.syncInterval,
+		inner:        NewSyncMapLoadThenStore(limiter.NewResetbasedLimiter, opt.replenishedPerSecond, opt.burst),
 		toSync:       make([]sync.Map, 1),
 		lastSynced:   map[string]int64{},
 	}
 	go func() {
-		ticker := time.NewTicker(opt.SyncInterval)
+		ticker := time.NewTicker(opt.syncInterval)
 		for {
 			select {
 			case <-ctx.Done():
@@ -70,9 +70,9 @@ func (r *RedisDelayedSync) Allow(key string) (bool, error) {
 	return r.AllowN(key, 1)
 }
 
-func (r *RedisDelayedSync) AllowN(key string, n int) (bool, error) {
+func (r *RedisDelayedSync) AllowN(key string, cost int) (bool, error) {
 	r.toSync[r.indexToSync.Load()].LoadOrStore(key, struct{}{})
-	return r.inner.AllowN(key, n)
+	return r.inner.AllowN(key, cost)
 }
 
 // Note: This function is not thread safe
@@ -103,7 +103,7 @@ func (r *RedisDelayedSync) sync(key string) error {
 	if r.lastSynced[key] == 0 {
 		resetAt := limiter.GetResetAt()
 		// TODO: fix arbitrary 48 hours expiry
-		cmd := r.rdb.SetNX(r.ctx, key, int64(resetAt), time.Hour*48)
+		cmd := r.redisClient.SetNX(r.ctx, key, int64(resetAt), time.Hour*48)
 		if cmd.Err() != nil {
 			return cmd.Err()
 		}
@@ -114,7 +114,7 @@ func (r *RedisDelayedSync) sync(key string) error {
 		// because we will later calculate the difference between the value in redis with the local resetAt value
 		r.lastSynced[key] = int64(resetAt)
 	}
-	cmd := r.rdb.IncrBy(r.ctx, key, int64(delta))
+	cmd := r.redisClient.IncrBy(r.ctx, key, int64(delta))
 	if cmd.Err() != nil {
 		return cmd.Err()
 	}

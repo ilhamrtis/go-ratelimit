@@ -42,7 +42,7 @@ A high-performance distributed rate limiter designed for systems that prioritize
   - Asynchronous Redis synchronization to minimize latency impact
   - Local state management using `SyncMapLoadThenStore` for concurrent access
 - **Performance**: Up to 1000x faster than [go-redis/redis_rate](https://github.com/go-redis/redis_rate)
-  - Benchmarks show 44 million RPS vs 45,000 RPS for go-redis/redis_rate
+  - Benchmarks show 44 million request_per_second vs 45,000 request_per_second for go-redis/redis_rate
 - **Trade-offs**: Slightly relaxed accuracy in exchange for significantly better performance
 - **Use Cases**: High-throughput distributed systems where occasional rate limit inaccuracies are acceptable
 

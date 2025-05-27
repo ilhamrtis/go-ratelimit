@@ -32,26 +32,26 @@ func limiterRunner(b *testing.B, name string, numberOfGoroutines int, limiter Li
 	runResult := b.Run(fmt.Sprintf("%s/goroutines=%d", name, numberOfGoroutines), func(b *testing.B) {
 		b.ReportAllocs()
 		b.SetParallelism(numberOfGoroutines)
-		allowed := atomic.Int64{}
-		disallowed := atomic.Int64{}
+		totalAllowed := atomic.Int64{}
+		totalDisallowed := atomic.Int64{}
 		b.RunParallel(func(pb *testing.PB) {
-			a, d := int64(0), int64(0)
+			allowed, disallowed := int64(0), int64(0)
 			for pb.Next() {
 				if limiter.Allow() {
-					a++
+					allowed++
 				} else {
-					d++
+					disallowed++
 				}
 			}
-			allowed.Add(a)
-			disallowed.Add(d)
+			totalAllowed.Add(allowed)
+			totalDisallowed.Add(disallowed)
 		})
 
 		lapsed := b.Elapsed().Seconds()
 		if lapsed > maxLapsed {
 			maxLapsed = lapsed
-			maxAllowed = float64(allowed.Load())
-			maxDisallowed = float64(disallowed.Load())
+			maxAllowed = float64(totalAllowed.Load())
+			maxDisallowed = float64(totalDisallowed.Load())
 		}
 	})
 	fmt.Printf("%s/custom_metrics\tallowed=%f\tdisallowed=%f\tlapsed=%f\tallowed(rps)=%f\ttotal(rps)=%f\n", b.Name()+"/"+name, maxAllowed, maxDisallowed, maxLapsed, maxAllowed/maxLapsed, (maxAllowed+maxDisallowed)/maxLapsed)
