@@ -43,7 +43,8 @@ A high-performance distributed rate limiter designed for systems that prioritize
   - Local state management using `SyncMapLoadThenStore` for concurrent access
 - **Performance**: Up to 1000x faster than [go-redis/redis_rate](https://github.com/go-redis/redis_rate)
   - Benchmarks show 44 million request_per_second vs 45,000 request_per_second for go-redis/redis_rate
-- **Trade-offs**: Slightly relaxed accuracy in exchange for significantly better performance
+- **Trade-offs**: Slightly relaxed accuracy in exchange for significantly better performance, this is mitigated by **Penalty Spillover**
+- **Penalty Spillover**: If users exceed designated rate-limit globally, upon the next synchronization the user would still throttled accordingly
 - **Use Cases**: High-throughput distributed systems where occasional rate limit inaccuracies are acceptable
 
 #### **GoRedisRate**
