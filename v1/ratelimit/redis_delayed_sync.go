@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -12,14 +11,15 @@ import (
 )
 
 type RedisDelayedSync struct {
-	syncInterval time.Duration
-	ctx          context.Context
-	cancel       context.CancelFunc
-	inner        *SyncMapLoadThenStore[*limiter.ResetBasedLimiter]
-	redisClient  *redis.Client
-	indexToSync  atomic.Int32
-	toSync       []sync.Map
-	lastSynced   map[string]int64
+	syncInterval     time.Duration
+	ctx              context.Context
+	cancel           context.CancelFunc
+	inner            *SyncMapLoadThenStore[*limiter.ResetBasedLimiter]
+	redisClient      *redis.Client
+	toSync           sync.Map
+	lastSynced       map[string]int64
+	syncErrorHandler func(error)
+	keyExpiry        time.Duration
 }
 
 type RedisDelayedSyncOption struct {
@@ -29,6 +29,8 @@ type RedisDelayedSyncOption struct {
 	ReplenishedPerSecond float64
 	Burst                int
 	RedisClient          *redis.Client
+	SyncErrorHandler     func(error)
+	KeyExpiry            time.Duration
 }
 
 func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *RedisDelayedSync {
@@ -38,13 +40,20 @@ func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *Redis
 	ctx, cancel := context.WithCancel(ctx)
 
 	rl := &RedisDelayedSync{
-		ctx:          ctx,
-		cancel:       cancel,
-		redisClient:  opt.RedisClient,
-		syncInterval: opt.SyncInterval,
-		inner:        NewSyncMapLoadThenStore(limiter.NewResetbasedLimiter, opt.ReplenishedPerSecond, opt.Burst),
-		toSync:       make([]sync.Map, 1),
-		lastSynced:   map[string]int64{},
+		ctx:              ctx,
+		cancel:           cancel,
+		redisClient:      opt.RedisClient,
+		syncInterval:     opt.SyncInterval,
+		inner:            NewSyncMapLoadThenStore(limiter.NewResetbasedLimiter, opt.ReplenishedPerSecond, opt.Burst),
+		toSync:           sync.Map{},
+		lastSynced:       map[string]int64{},
+		syncErrorHandler: opt.SyncErrorHandler,
+		keyExpiry:        opt.KeyExpiry,
+	}
+	if rl.syncErrorHandler == nil {
+		rl.syncErrorHandler = func(err error) {
+			fmt.Printf("error syncing: %v\n", err)
+		}
 	}
 	go func() {
 		ticker := time.NewTicker(opt.SyncInterval)
@@ -54,11 +63,10 @@ func NewRedisDelayedSync(ctx context.Context, opt RedisDelayedSyncOption) *Redis
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				indexToSync := rl.indexToSync.Load()
-				rl.indexToSync.Store((indexToSync + 1) % int32(len(rl.toSync)))
-				if err := rl.syncAll(indexToSync); err != nil {
-					// TODO: handle error
-					fmt.Printf("error syncing: %v\n", err)
+				if err := rl.syncAll(); err != nil {
+					if rl.syncErrorHandler != nil {
+						rl.syncErrorHandler(err)
+					}
 				}
 			}
 		}
@@ -71,15 +79,23 @@ func (r *RedisDelayedSync) Allow(key string) (bool, error) {
 }
 
 func (r *RedisDelayedSync) AllowN(key string, cost int) (bool, error) {
-	r.toSync[r.indexToSync.Load()].LoadOrStore(key, struct{}{})
+	r.toSync.LoadOrStore(key, struct{}{})
 	return r.inner.AllowN(key, cost)
 }
 
 // Note: This function is not thread safe
-func (r *RedisDelayedSync) syncAll(index int32) error {
+func (r *RedisDelayedSync) syncAll() error {
+	// -1 means no expiry
+	expiry := int64(-1)
+	// If the key expiry is set, use it to calculate the expiry time
+	if r.keyExpiry > 0 {
+		expiry = time.Now().Add(-r.keyExpiry).UnixNano()
+	}
 	// Consider using a different approach to prioritize syncing the keys that are used more frequently
-	r.toSync[index].Range(func(key, value any) bool {
-		if err := r.sync(key.(string)); err != nil {
+	r.toSync.Range(func(key, value any) bool {
+		err := r.sync(key.(string), expiry)
+		if err != nil {
+			r.syncErrorHandler(err)
 			return false
 		}
 		return true
@@ -95,15 +111,15 @@ func (r *RedisDelayedSync) syncAll(index int32) error {
 }
 
 // Note: This function is not thread safe
-func (r *RedisDelayedSync) sync(key string) error {
+func (r *RedisDelayedSync) sync(key string, expiry int64) error {
 	limiter := r.inner.GetLimiter(key)
+	resetAt := limiter.GetResetAt()
+
 	delta := limiter.PopResetAtDelta()
 	// If the key is not synced yet, this could be the first time the key is used across the entire distributed environment
 	// We need to set the key in the redis
 	if r.lastSynced[key] == 0 {
-		resetAt := limiter.GetResetAt()
-		// TODO: fix arbitrary 48 hours expiry
-		cmd := r.redisClient.SetNX(r.ctx, key, int64(resetAt), time.Hour*48)
+		cmd := r.redisClient.SetNX(r.ctx, key, resetAt, 0)
 		if cmd.Err() != nil {
 			return cmd.Err()
 		}
@@ -123,6 +139,14 @@ func (r *RedisDelayedSync) sync(key string) error {
 	// diff>0: if the key is set by another server and the current server joined the cluster later -
 	// this is the case where the clock drift could be an issue if the key is set by another server, the clock drift will affect calculation of the diff
 	diff := cmd.Val() - r.lastSynced[key] - delta
+	if resetAt < expiry && delta == 0 {
+		r.toSync.Delete(key)
+		r.lastSynced[key] = 0
+		if diff == 0 {
+			r.redisClient.Expire(r.ctx, key, r.keyExpiry)
+		}
+		return nil
+	}
 	if diff > 0 {
 		limiter.IncrementResetAtBy(diff)
 	}
