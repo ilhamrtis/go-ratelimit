@@ -1,5 +1,8 @@
 # go-ratelimit
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/yesyoukenspace/go-ratelimit)](https://goreportcard.com/report/github.com/yesyoukenspace/go-ratelimit)
+[![codecov](https://codecov.io/gh/YesYouKenSpace/go-ratelimit/graph/badge.svg?token=R7EW0C9T1T)](https://codecov.io/gh/YesYouKenSpace/go-ratelimit)
+
 `go-ratelimit` is a high-performance Go library for rate limiting that provides multiple implementations optimized for different use cases. The library focuses on providing both isolated and distributed rate limiting solutions with a focus on performance and flexibility.
 
 ## Design Goals
