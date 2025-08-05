@@ -244,3 +244,15 @@ func (r *RedisDelayedSync) sync(key string, expiry int64) error {
 	r.lastSyncedResetAt.Store(key, remoteValue)
 	return nil
 }
+
+// SyncKey is a helper that triggers a manual sync for a specific key.
+// Note : It's not thread-safe and should only be used in test scenarios or controlled debugging.
+func (r *RedisDelayedSync) SyncKey(key string) error {
+	return r.sync(key, -1)
+}
+
+// GetResetAt is a helper that returns the current resetAt value for a given key.
+// Useful for asserting limiter state in tests.
+func (r *RedisDelayedSync) GetResetAt(key string) int64 {
+	return r.inner.GetLimiter(key).GetResetAt()
+}

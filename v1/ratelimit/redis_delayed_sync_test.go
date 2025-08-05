@@ -310,3 +310,53 @@ func TestRedisDelayedSync(t *testing.T) {
 		}
 	})
 }
+
+func Test_SyncKey_ShouldRunWithoutError(t *testing.T) {
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379", DB: 9})
+	defer rdb.FlushDB(context.Background())
+
+	limiter := NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
+		RedisClient:     rdb,
+		DisableAutoSync: true,
+	})
+
+	key := "test:synckey"
+	_, _ = limiter.ForceN(key, 1, 10, 10)
+
+	if err := limiter.SyncKey(key); err != nil {
+		t.Fatalf("SyncKey returned error: %v", err)
+	}
+}
+
+func Test_GetResetAt_ShouldReturnNonZeroAfterUse(t *testing.T) {
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379", DB: 9})
+	defer rdb.FlushDB(context.Background())
+
+	limiter := NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
+		RedisClient:     rdb,
+		DisableAutoSync: true,
+	})
+
+	key := "test:getreset"
+	_, _ = limiter.ForceN(key, 1, 10, 10)
+
+	resetAt := limiter.GetResetAt(key)
+	if resetAt == 0 {
+		t.Fatalf("GetResetAt should return non-zero after usage")
+	}
+}
+
+func Test_GetResetAt_DefaultIsZero(t *testing.T) {
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379", DB: 9})
+	defer rdb.FlushDB(context.Background())
+
+	limiter := NewRedisDelayedSync(context.Background(), RedisDelayedSyncOption{
+		RedisClient:     rdb,
+		DisableAutoSync: true,
+	})
+
+	key := "test:getreset:unused"
+	if got := limiter.GetResetAt(key); got != 0 {
+		t.Fatalf("expected resetAt to be 0 for unused key, got %d", got)
+	}
+}
